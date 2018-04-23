@@ -14,7 +14,7 @@ spec:
     spec:
         containers:
         - name: ui-service
-          image: ewanvalentine/ui:latest
+          image: inigofu/ui:latest
           imagePullPolicy: Always
           env:
           - name: UPDATED_AT
