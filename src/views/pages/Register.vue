@@ -82,7 +82,6 @@ export default {
         method: 'Auth.Create'
       })
         .then(({ data }) => {
-          console.log('hola31')
           var token = data.token
           store.commit('SET_TOKEN', token)
           // Save to local storage as well
@@ -91,7 +90,6 @@ export default {
           }
           this.$router.push('/')
         }).catch((error) => {
-          console.log('hola41')
           const { status, data } = error.response
           if (status === 422) {
             this.error = data.body.message

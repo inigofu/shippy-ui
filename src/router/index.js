@@ -3,6 +3,7 @@ import Router from 'vue-router'
 
 // Containers
 import Full from '@/containers/Full'
+import Form from '@/containers/form/form'
 
 // Views
 import Dashboard from '@/views/Dashboard'
@@ -100,6 +101,11 @@ export default new Router({
           path: 'widgets',
           name: 'Widgets',
           component: Widgets
+        },
+        {
+          path: '/form/:id?',
+          name: 'form',
+          component: Form
         },
         {
           path: 'base',
