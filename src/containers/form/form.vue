@@ -59,6 +59,7 @@ import {each, cloneDeep, merge} from 'lodash'
 import FieldAwesome from './fieldAwesome.vue'
 import Multiselect from 'vue-multiselect'
 import resize from 'vue-resize-directive'
+import JSONfn from 'json-fn'
 Vue.component('multiselect', Multiselect)
 
 // Test custom field
@@ -80,6 +81,9 @@ export default {
     resize
   },
   filters: filters,
+  props: [
+    'propID'
+  ],
   data () {
     return {
       isNewModel: false,
@@ -115,18 +119,22 @@ export default {
     },
     prettyModel () {
       return filters.prettyJSON(this.model)
+    },
+    id () {
+      return this.propID
     }
   },
-  beforeRouteUpdate (to, from, next) {
-    var row = this.rows.filter((p) => {
-      return p.id === Number(to.params.id)
-    })
-    console.log(row)
-    this.clearSelection()
-    this.selected.push(row[0])
-    // }
-    this.generateModel()
-    next()
+  watch: {
+    id: function (newId, oldId) {
+      var row = this.rows.filter((p) => {
+        return p.id === Number(newId)
+      })
+      console.log(row)
+      this.clearSelection()
+      this.selected.push(row[0])
+      // }
+      this.generateModel()
+    }
   },
   methods: {
     onResize (event) {
@@ -263,6 +271,7 @@ export default {
 
   mounted () {
     console.log('form mounted', users.users())
+    console.log('schema:', JSONfn.stringify(this.schema))
     this.rows = users.users()
     if (document.documentElement.clientWidth < 991.98) {
       this.panWidth = '100%'

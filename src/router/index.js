@@ -3,7 +3,7 @@ import Router from 'vue-router'
 
 // Containers
 import Full from '@/containers/Full'
-import Form from '@/containers/form/form'
+// import Form from '@/containers/form/form'
 
 // Views
 import Dashboard from '@/views/Dashboard'
@@ -15,6 +15,7 @@ import Charts from '@/views/Charts'
 import Widgets from '@/views/Widgets'
 
 // Views - Components
+import Form from '@/views/forms/testForm'
 import Cards from '@/views/base/Cards'
 import Forms from '@/views/base/Forms'
 import Switches from '@/views/base/Switches'
