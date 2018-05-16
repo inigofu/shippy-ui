@@ -22,12 +22,12 @@
     <h6 class="title is-6">Pane 2</h6>
   </div> -->
 <multipane class="custom-resizer container" v-resize="onResize" layout="vertical" v-on:paneResize="paneResizeStop">
-  <div v-bind:class="[model ? 'd-none d-lg-block' : '' ,'pane']" v-bind:style="{minWidth: '1%' , width: panWidth}">
+  <div v-bind:class="[model ? 'd-none d-lg-block' : '' ,'pane']" v-bind:style="{minWidth: '20%' , width: panWidth}">
     <data-table :rows="rows" :fields="fields" :selected="selected" :select="selectRow" :stacked="stacked"></data-table>
   </div>
-  <multipane-resizer></multipane-resizer>
+  <multipane-resizer v-bind:class="[model ? 'd-none d-lg-block' : '']"></multipane-resizer>
   <div v-bind:class="[model ? '' : 'd-none d-lg-block' ,'pane']" :style="{ flexGrow: 1, maxWidth:'100%', width: '20%' }">
-    <div >
+    <div class="horizontal-panes">
       <div class="control-buttons text-center">
         <button @click="newModel" class="btn btn-default new"> <i class="fa fa-plus"></i>New</button>
         <button @click="saveModel" class="btn btn-primary save"> <i class="fa fa-floppy-o"></i>Save<i v-if="showWarning()" class="fa fa-warning"></i></button>
@@ -38,8 +38,15 @@
       </div>
       <vue-form-generator :schema="schema" :model="model" :options="formOptions" :multiple="selected.length > 1" ref="form" :is-new-model="isNewModel" @model-updated="modelUpdated" @validated="onValidated"></vue-form-generator>
     </div>
-    <div>
-      <pre v-if="model" v-html="prettyModel"></pre>
+    <div class="horizontal-panes">
+      <b-tabs >
+        <b-tab v-for="tab in schematabs"  :key="tab.id" v-bind:title= "tab.tabs.name">
+          <div v-for="model in tab.model"  :key="model.id">
+          <h3>nuevo campo</h3>
+          <vue-form-generator :schema="tab.tabs" :model="model" :options="formOptions" :multiple="selected.length > 1" ref="form" :is-new-model="isNewModel"></vue-form-generator>
+          </div>
+        </b-tab>
+      </b-tabs>
     </div>
   </div>
 </multipane>
@@ -50,16 +57,13 @@ import Vue from 'vue'
 import VueFormGenerator from '../../components/formGenerator/formGenerator.vue'
 import { Multipane, MultipaneResizer } from '../../components/multipane'
 import DataTable from './dataTable.vue'
-import Fakerator from 'fakerator'
-
 import Schema from './schema'
-import users from './data'
 import { filters } from './utils'
 import {each, cloneDeep, merge} from 'lodash'
 import FieldAwesome from './fieldAwesome.vue'
 import Multiselect from 'vue-multiselect'
 import resize from 'vue-resize-directive'
-import JSONfn from 'json-fn'
+
 Vue.component('multiselect', Multiselect)
 
 // Test custom field
@@ -67,8 +71,6 @@ Vue.component('multiselect', Multiselect)
 Vue.component('fieldAwesome', FieldAwesome)
 
 Vue.use(VueFormGenerator)
-
-let fakerator = new Fakerator()
 
 export default {
   components: {
@@ -82,27 +84,22 @@ export default {
   },
   filters: filters,
   props: [
-    'propID'
+    'propID',
+    'schema',
+    'fields',
+    'rows'
   ],
   data () {
     return {
       isNewModel: false,
 
       selected: [],
-
       stacked: true,
-
+      schematabs: [],
       panWidth: '20%',
 
       model: null,
-
-      rows: [],
-
-      schema: Schema,
-      fields: ['ID',
-        'Name',
-        'Country',
-        'role'],
+      schema2: Schema,
       formOptions: {
         validateAfterLoad: true,
         validateAfterChanged: true,
@@ -117,9 +114,6 @@ export default {
 
       return []
     },
-    prettyModel () {
-      return filters.prettyJSON(this.model)
-    },
     id () {
       return this.propID
     }
@@ -127,10 +121,10 @@ export default {
   watch: {
     id: function (newId, oldId) {
       var row = this.rows.filter((p) => {
-        return p.id === Number(newId)
+        return p.id === newId
       })
-      console.log(row)
       this.clearSelection()
+      console.log('row', row)
       this.selected.push(row[0])
       // }
       this.generateModel()
@@ -175,13 +169,20 @@ export default {
     generateModel () {
       if (this.selected.length === 1) {
         this.model = cloneDeep(this.selected[0])
+        console.log('this.model', this.model)
+        this.schematabs = this.schema.tabs.map(function (tab, index, array) {
+          return {
+            tabs: tab,
+            model: eval('this.model.' + tab.name),
+            modelstring: 'this.model.' + tab.name
+          }
+        }, this)
       } else if (this.selected.length > 1) {
         this.model = VueFormGenerator.schema.mergeMultiObjectFields(Schema, this.selected)
       } else {
         this.model = null
       }
     },
-
     newModel () {
       console.log('Create new model...')
       this.selected.splice(0)
@@ -270,25 +271,12 @@ export default {
   },
 
   mounted () {
-    console.log('form mounted', users.users())
-    console.log('schema:', JSONfn.stringify(this.schema))
-    this.rows = users.users()
+    // this.rows = users.users()
     if (document.documentElement.clientWidth < 991.98) {
       this.panWidth = '100%'
     } else {
       this.panWidth = '20%'
     }
-    this.$nextTick(function () {
-      window.app = this
-
-      if (users.length > 0) {
-        this.selectRow(null, fakerator.random.arrayElement(users))
-      }
-
-      // Localize validate errors
-      // VueFormGenerator.validators.resources.fieldIsRequired = "Ezt a mezőt kötelező kitölteni!";
-      // VueFormGenerator.validators.resources.textTooSmall = "A szöveg túl rövid! Jelenleg: {0}, minimum: {1}";
-    })
   }
 }
 
@@ -361,7 +349,6 @@ window.Vue = require('vue')
 }
 .custom-resizer > .pane {
   text-align: left;
-  padding: 15px;
   overflow: hidden;
   background: #eee;
   border: 1px solid #ccc;
@@ -372,24 +359,16 @@ window.Vue = require('vue')
 .custom-resizer > .multipane-resizer {
   margin: 0; left: 0;
   position: relative;
-  &:before {
-    display: block;
-    content: "";
-    width: 3px;
-    height: 40px;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    margin-top: -20px;
-    margin-left: -1.5px;
-    border-left: 1px solid #ccc;
-    border-right: 1px solid #ccc;
-  }
+  border: 1px solid #ccc;
   &:hover {
     &:before {
       border-color: #999;
     }
   }
+}
+.horizontal-panes {
+  width: 100%;
+  padding: 15px;
 }
 
 </style>
