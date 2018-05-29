@@ -1,26 +1,4 @@
 <template>
-  <!-- <div class="pane" :style="{ minWidth: '100px', width: '150px', maxWidth: '200px' }">
-    <h6 class="title is-6">Pane 1</h6>
-     <data-table :rows="rows" :selected="selected" :select="selectRow"></data-table>
-  </div>
-  <multipane-resizer></multipane-resizer>
-  <div :style="{ width: '25%', maxWidth: '50%' }">
-    <div>
-      <div class="control-buttons text-center">
-        <button @click="newModel" class="btn btn-default new"> <i class="fa fa-plus"></i>New</button>
-        <button @click="saveModel" class="btn btn-primary save"> <i class="fa fa-floppy-o"></i>Save<i v-if="showWarning()" class="fa fa-warning"></i></button>
-        <button @click="deleteModel" class="btn btn-danger delete"> <i class="fa fa-trash"></i>Delete</button>
-      </div>
-      <div class="errors text-center">
-        <div v-for="(item, index) in validationErrors" :key=index track-by="index" class="alert alert-danger">{{ item.field.label}}: <strong>{{ item.error }}</strong></div>
-      </div>
-      <vue-form-generator :schema="schema" :model="model" :options="formOptions" :multiple="selected.length > 1" ref="form" :is-new-model="isNewModel" @model-updated="modelUpdated" @validated="onValidated"></vue-form-generator>
-    </div>
-    <div>
-      <pre v-if="model" v-html="prettyModel"></pre>
-    </div>
-    <h6 class="title is-6">Pane 2</h6>
-  </div> -->
 <multipane class="custom-resizer container" v-resize="onResize" layout="vertical" v-on:paneResize="paneResizeStop">
   <div v-bind:class="[model ? 'd-none d-lg-block' : '' ,'pane']" v-bind:style="{minWidth: '20%' , width: panWidth}">
     <data-table :rows="rows" :fields="fields" :selected="selected" :select="selectRow" :stacked="stacked"></data-table>
@@ -41,10 +19,7 @@
     <div class="horizontal-panes">
       <b-tabs >
         <b-tab v-for="tab in schematabs"  :key="tab.id" v-bind:title= "tab.tabs.name">
-          <div v-for="model in tab.model"  :key="model.id">
-          <h3>nuevo campo</h3>
-          <vue-form-generator :schema="tab.tabs" :model="model" :options="formOptions" :multiple="selected.length > 1" ref="form" :is-new-model="isNewModel"></vue-form-generator>
-          </div>
+          <vue-form-generator-table :schema="tab.tabs" :model="tab.model" :options="formOptions" :multiple="selected.length > 1" :is-new-model="isNewModel"></vue-form-generator-table>
         </b-tab>
       </b-tabs>
     </div>
@@ -55,11 +30,12 @@
 <script>
 import Vue from 'vue'
 import VueFormGenerator from '../../components/formGenerator/formGenerator.vue'
+import VueFormGeneratorTable from '../../components/formGenerator/formGeneratorTable.vue'
 import { Multipane, MultipaneResizer } from '../../components/multipane'
 import DataTable from './dataTable.vue'
 import Schema from './schema'
 import { filters } from './utils'
-import {each, cloneDeep, merge} from 'lodash'
+import { isFunction, isArray, set, get, each, cloneDeep, isObject, merge } from 'lodash'
 import FieldAwesome from './fieldAwesome.vue'
 import Multiselect from 'vue-multiselect'
 import resize from 'vue-resize-directive'
@@ -70,14 +46,15 @@ Vue.component('multiselect', Multiselect)
 
 Vue.component('fieldAwesome', FieldAwesome)
 
-Vue.use(VueFormGenerator)
+// Vue.use(VueFormGenerator)
 
 export default {
   components: {
     DataTable,
     VueFormGenerator,
     Multipane,
-    MultipaneResizer
+    MultipaneResizer,
+    VueFormGeneratorTable
   },
   directives: {
     resize
@@ -95,7 +72,6 @@ export default {
 
       selected: [],
       stacked: true,
-      schematabs: [],
       panWidth: '20%',
 
       model: null,
@@ -116,6 +92,27 @@ export default {
     },
     id () {
       return this.propID
+    },
+    schematabs () {
+      if (this.schema.tabs !== undefined && this.model !== null) {
+        return this.schema.tabs.map(function (tab, index, array) {
+          return {
+            tabs: tab,
+            model: this.model[tab.name],
+            modelstring: 'this.model.' + tab.name
+          }
+        }, this)
+      } else if (this.schema.tabs !== undefined) {
+        return this.schema.tabs.map(function (tab, index, array) {
+          return {
+            tabs: tab,
+            model: {},
+            modelstring: {}
+          }
+        }, this)
+      } else {
+        return []
+      }
     }
   },
   watch: {
@@ -170,15 +167,8 @@ export default {
       if (this.selected.length === 1) {
         this.model = cloneDeep(this.selected[0])
         console.log('this.model', this.model)
-        this.schematabs = this.schema.tabs.map(function (tab, index, array) {
-          return {
-            tabs: tab,
-            model: eval('this.model.' + tab.name),
-            modelstring: 'this.model.' + tab.name
-          }
-        }, this)
       } else if (this.selected.length > 1) {
-        this.model = VueFormGenerator.schema.mergeMultiObjectFields(Schema, this.selected)
+        this.model = this.mergeMultiObjectFields(Schema, this.selected)
       } else {
         this.model = null
       }
@@ -186,7 +176,8 @@ export default {
     newModel () {
       console.log('Create new model...')
       this.selected.splice(0)
-      let newRow = VueFormGenerator.schema.createDefaultObject(Schema, { id: this.getNextID() })
+      console.log(VueFormGenerator)
+      let newRow = this.createDefaultObject(Schema, { id: this.getNextID() })
       this.isNewModel = true
       this.model = newRow
 
@@ -202,6 +193,9 @@ export default {
         if (this.isNewModel) {
           this.rows.push(this.model)
           this.selectRow(null, this.model, false)
+          this.$emit('addModelEvent', this.model)
+        } else {
+          this.$emit('saveModelEvent', this.model)
         }
       } else {
         console.warn('Error saving model...')
@@ -239,7 +233,7 @@ export default {
     },
 
     validate () {
-      // console.log("validate", this.$refs.form, this.$refs.form.validate());
+      console.log('validate', this.$refs.form, this.$refs.form.validate())
       return this.$refs.form.validate()
     },
 
@@ -266,8 +260,59 @@ export default {
       } else {
         this.stacked = false
       }
-    }
+    },
+    // Create a new model by schema default values
+    createDefaultObject (schema, obj = {}) {
+      each(schema.fields, (field) => {
+        if (get(obj, field.model) === undefined && field.default !== undefined) {
+          if (isFunction(field.default)) {
+            set(obj, field.model, field.default(field, schema, obj))
+          } else if (isObject(field.default) || isArray(field.default)) {
+            set(obj, field.model, cloneDeep(field.default))
+          } else {
+            set(obj, field.model, field.default)
+          }
+        }
+      })
+      return obj
+    },
+    // Get a new model which contains only properties of multi-edit fields
+    getMultipleFields (schema) {
+      let res = []
+      each(schema.fields, (field) => {
+        if (field.multi === true) {
+          res.push(field)
+        }
+      })
 
+      return res
+    },
+    // Merge many models to one 'work model' by schema
+    mergeMultiObjectFields (schema, objs) {
+      let model = {}
+
+      let fields = this.getMultipleFields(schema)
+
+      each(fields, (field) => {
+        let mergedValue
+        let notSet = true
+        let path = field.model
+
+        each(objs, (obj) => {
+          let v = get(obj, path)
+          if (notSet) {
+            mergedValue = v
+            notSet = false
+          } else if (mergedValue !== v) {
+            mergedValue = undefined
+          }
+        })
+
+        set(model, path, mergedValue)
+      })
+
+      return model
+    }
   },
 
   mounted () {

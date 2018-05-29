@@ -1,6 +1,6 @@
 <template>
   <div class="wrapper">
-    <customForm :propID="id" :schema="schema" :fields="fields" :rows="rows"> </customForm>
+    <customForm :propID="id" :schema="schema" :fields="fields" :rows="rows" v-on:addModelEvent="addModel" v-on:saveModelEvent="saveModel"> </customForm>
   </div>
 </template>
 <script>
@@ -69,6 +69,23 @@ export default {
         }).catch((error) => {
           throw error
         })
+    },
+    saveModel (model) {
+      console.log(model)
+      this.$http.post('/rpc', {
+        request: model,
+        service: 'shippy.auth',
+        method: 'Auth.UpdateForm'
+      })
+        .then(({ data }) => {
+          console.log('rows', data)
+          this.rows = data.forms
+        }).catch((error) => {
+          throw error
+        })
+    },
+    addModel (model) {
+      console.log('ADDMODEL', model)
     }
   }
 }
