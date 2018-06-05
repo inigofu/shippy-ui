@@ -1,6 +1,8 @@
 <template>
   <div class="wrapper">
-    <customForm :propID="id" :schema="schema" :fields="fields" :rows="rows" v-on:addModelEvent="addModel" v-on:saveModelEvent="saveModel"> </customForm>
+    <template v-if="dataLoaded">
+    <customForm :propID="id" :schema="schema" :fields="fields" :rows="rows" v-on:addModelEvent="addModel" v-on:deleteModelEvent="deleteModel" v-on:saveModelEvent="saveModel"> </customForm>
+    </template>
   </div>
 </template>
 <script>
@@ -18,6 +20,7 @@ export default {
   data () {
     return {
       id: null,
+      dataLoaded: false,
       schema: {},
       fields: ['id',
         'name'],
@@ -39,19 +42,21 @@ export default {
     })
     this.getSchema()
     this.getData()
+    console.log('testform mounted', this.schema)
   },
   methods: {
     getSchema () {
       this.$http.post('/rpc', {
         request: {
-          id: '251efbae-2a32-4bf6-a524-5a6d63cd8155'
+          id: 'bc5012d7-5945-46d9-95c0-82f57488423e'
         },
         service: 'shippy.auth',
         method: 'Auth.GetForm'
       })
         .then(({ data }) => {
-          console.log(data.form)
           this.schema = JSONfn.parse(JSONfn.stringify(data.form))
+          console.log('data loaded', this.schema)
+          this.dataLoaded = true
         }).catch((error) => {
           throw error
         })
@@ -64,28 +69,47 @@ export default {
         method: 'Auth.GetAllForms'
       })
         .then(({ data }) => {
-          console.log('rows', data)
           this.rows = data.forms
         }).catch((error) => {
           throw error
         })
     },
     saveModel (model) {
-      console.log(model)
       this.$http.post('/rpc', {
         request: model,
         service: 'shippy.auth',
         method: 'Auth.UpdateForm'
       })
         .then(({ data }) => {
-          console.log('rows', data)
-          this.rows = data.forms
+          // this.rows = data.forms
         }).catch((error) => {
           throw error
         })
     },
     addModel (model) {
       console.log('ADDMODEL', model)
+      this.$http.post('/rpc', {
+        request: model,
+        service: 'shippy.auth',
+        method: 'Auth.UpdateForm'
+      })
+        .then(({ data }) => {
+          // this.rows = data.forms
+        }).catch((error) => {
+          throw error
+        })
+    },
+    deleteModel (model) {
+      this.$http.post('/rpc', {
+        request: model,
+        service: 'shippy.auth',
+        method: 'Auth.DeleteForm'
+      })
+        .then(({ data }) => {
+          // this.rows = data.forms
+        }).catch((error) => {
+          throw error
+        })
     }
   }
 }

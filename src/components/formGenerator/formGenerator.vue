@@ -206,7 +206,30 @@ export default {
       } else if (isString(field.styleClasses)) {
         baseClasses[field.styleClasses] = true
       }
-
+      if (!isNil(field.xs)) {
+        baseClasses['col-xs-' + field.xs] = true
+      }
+      if (!isNil(field.xs_offset)) {
+        baseClasses['col-xs-offset-' + field.xs_offset] = true
+      }
+      if (!isNil(field.sm)) {
+        baseClasses['col-sm-' + field.sm] = true
+      }
+      if (!isNil(field.sm_offset)) {
+        baseClasses['col-sm-offset-' + field.sm_offset] = true
+      }
+      if (!isNil(field.md)) {
+        baseClasses['col-md-' + field.md] = true
+      }
+      if (!isNil(field.md_offset)) {
+        baseClasses['col-md-offset-' + field.md_offset] = true
+      }
+      if (!isNil(field.lg)) {
+        baseClasses['col-lg-' + field.lg] = true
+      }
+      if (!isNil(field.lg_offset)) {
+        baseClasses['col-lg-offset-' + field.lg_offset] = true
+      }
       if (!isNil(field.type)) {
         baseClasses['field-' + field.type] = true
       }

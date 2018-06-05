@@ -1,47 +1,45 @@
 <template>
 
   <div >
-    <div class="offset no-changes" v-bind:style= "{width : col.data.offset + 'px'}"></div>
+    <div class="offset no-changes" v-bind:style= "{width : field.offset + 'px'}"></div>
         <div class="width easing"  :class="{draggable: draggable, resizable: resizable, active: enabled, dragging: dragging, resizing: resizing }"
 
             @mousedown.stop="elmDown"
             @touchstart.prevent.stop="elmDown"
-            @dblclick="fillParent" v-bind:style= "{width : col.data.width + 'px'}">
+            @dblclick="fillParent" v-bind:style= "{width : field.width + 'px'}">
             <div class="nested hidden">
             <i class="icon-th"></i>
             </div>
-            <input class="col-name" placeholder="col">
             <div class="classes">
-            <div class="xs-width">xs-{{col.data.xs}}</div>
-            <div class="xs-offset">xs-offset-{{col.data.xs_offset}}</div>
-            <div class="sm-width">sm{{col.data.sm}}</div>
-            <div class="sm-offset">sm-offset-{{col.data.sm_offset}}</div>
-            <div class="md-width">md-{{col.data.md}}</div>
-            <div class="md-offset">md-offset-{{col.data.md_offset}}</div>
-            <div class="lg-width">lg-{{col.data.lg}}</div>
-            <div class="lg-offset">lg-offset-{{col.data.lg_offset}}</div>
+              <div class="xs-width">xs-{{field.xs}}</div>
+              <div class="xs-offset">xs-offset-{{field.xs_offset}}</div>
+              <div class="sm-width">sm{{field.sm}}</div>
+              <div class="sm-offset">sm-offset-{{field.sm_offset}}</div>
+              <div class="md-width">md-{{field.md}}</div>
+              <div class="md-offset">md-offset-{{field.md_offset}}</div>
+              <div class="lg-width">lg-{{field.lg}}</div>
+              <div class="lg-offset">lg-offset-{{field.lg_offset}}</div>
             </div>
-            <div class="offset-handle"></div>
-            <div
-            v-for="handle in handles"
-
-            v-if="resizable"
-
-            class="handle"
-
-            :key="handle"
-
-            :class="'handle-' + handle"
-
-            :style="{ display: enabled ? 'block' : 'none'}"
-
-            @mousedown.stop.prevent="handleDown(handle, $event)"
-
-            @touchstart.stop.prevent="handleDown(handle, $event)"
-
-            ></div>
-
+            <div v-for="handle in handles" v-if="resizable" class="handle" :key="handle" :class="'handle-' + handle" :style="{ display: enabled ? 'block' : 'none'}"
+                  @mousedown.stop.prevent="handleDown(handle, $event)"   @touchstart.stop.prevent="handleDown(handle, $event)">
+            </div>
             <slot></slot>
+            <div class="form-group" v-if="fieldVisible(field)">
+              <label v-if="fieldTypeHasLabel(field)" :for="getFieldID(field)" :class="field.labelClasses">
+                  {{ field.label }}
+                <span class="help" v-if="field.help">
+                  <i class="icon"></i>
+                  <div class="helpText" v-html="field.help"></div>
+                </span>
+              </label>
+              <div class="field-wrap">
+                <component :is="getFieldType(field)" :disabled="fieldDisabled(field)" :schema="field"></component>
+                <div class="buttons" v-if="buttonVisibility(field)">
+                  <button v-for="(btn,index) in field.buttons" :key="index"  :class="btn.classes"> {{ btn.label }}</button>
+                </div>
+              <div class="hint" v-if="field.hint"> {{ fieldHint(field) }}</div>
+              </div>
+            </div>
         </div>
   </div>
 
@@ -50,15 +48,64 @@
 <script>
 
 import { matchesSelectorToParentElements } from './utils/dom'
+import { isFunction, isNil } from 'lodash'
+import { slugifyFormID } from './utils/schema'
+
+import fieldCheckbox from './fields/core/fieldCheckbox.vue'
+import fieldChecklist from './fields/core/fieldChecklist.vue'
+import fieldInput from './fields/core/fieldInput.vue'
+import fieldLabel from './fields/core/fieldLabel.vue'
+import fieldSelect from './fields/core/fieldSelect.vue'
+import fieldSubmit from './fields/core/fieldSubmit.vue'
+import fieldTextArea from './fields/core/fieldTextArea.vue'
+import fieldUpload from './fields/core/fieldUpload.vue'
+import fieldRadios from './fields/core/fieldRadios.vue'
+
+import fieldCleave from './fields/optional/fieldCleave.vue'
+import fieldDateTimePicker from './fields/optional/fieldDateTimePicker.vue'
+import fieldGoogleAddress from './fields/optional/fieldGoogleAddress.vue'
+import fieldImage from './fields/optional/fieldImage.vue'
+import fieldMasked from './fields/optional/fieldMasked.vue'
+import fieldNoUiSlider from './fields/optional/fieldNoUiSlider.vue'
+import fieldPikaday from './fields/optional/fieldPikaday.vue'
+import fieldRangeSlider from './fields/optional/fieldRangeSlider.vue'
+import fieldSelectEx from './fields/optional/fieldSelectEx.vue'
+import fieldSpectrum from './fields/optional/fieldSpectrum.vue'
+import fieldStaticMap from './fields/optional/fieldStaticMap.vue'
+import fieldSwitch from './fields/optional/fieldSwitch.vue'
+import fieldVueMultiSelect from './fields/optional/fieldVueMultiSelect.vue'
 
 export default {
 
   replace: true,
 
   name: 'resize-observer',
-
+  components: {
+    fieldCheckbox,
+    fieldRadios,
+    fieldChecklist,
+    fieldInput,
+    fieldLabel,
+    fieldSelect,
+    fieldSubmit,
+    fieldTextArea,
+    fieldUpload,
+    fieldDateTimePicker,
+    fieldCleave,
+    fieldGoogleAddress,
+    fieldImage,
+    fieldMasked,
+    fieldNoUiSlider,
+    fieldPikaday,
+    fieldRangeSlider,
+    fieldSelectEx,
+    fieldSpectrum,
+    fieldSwitch,
+    fieldVueMultiSelect,
+    fieldStaticMap
+  },
   props: {
-    col: {},
+    field: {},
 
     preview: {type: String},
     indexpos: -1,
@@ -288,18 +335,26 @@ export default {
 
     this.elmH = this.$el.offsetHeight || this.$el.clientHeight
 
-    this.datos.xs = this.col.data.xs
-    this.datos.sm = this.col.data.sm
-    this.datos.md = this.col.data.md
-    this.datos.lg = this.col.data.lg
-    this.datos.xs_offset = this.col.data.xs_offset
-    this.datos.sm_offset = this.col.data.sm_offset
-    this.datos.md_offset = this.col.data.md_offset
-    this.datos.lg_offset = this.col.data.lg_offset
-    this.datos.width = this.col.data.width
-    this.datos.offset = this.col.data.offset
-    console.log('this.col.data.order', this.col.data.order)
-    this.datos.order = this.col.data.order
+    this.datos.xs = this.field.xs
+    this.datos.sm = this.field.sm
+    this.datos.md = this.field.md
+    this.datos.lg = this.field.lg
+    this.datos.xs_offset = this.field.xs_offset
+    this.datos.sm_offset = this.field.sm_offset
+    this.datos.md_offset = this.field.md_offset
+    this.datos.lg_offset = this.field.lg_offset
+    this.datos.width = this.field.width
+    this.datos.offset = this.field.offset
+    this.datos.type = this.field.type
+    this.datos.label = this.field.label
+    this.datos.model = this.field.model
+    this.datos.id = this.field.id
+    this.datos.featured = this.field.featured
+    this.datos.required = this.field.required
+    this.datos.help = this.field.help
+    this.datos.FormRefer = this.field.FormRefer
+    this.datos.inputType = this.field.inputType
+    this.datos.order = this.field.order
 
     this.reviewDimensions()
   },
@@ -358,9 +413,77 @@ export default {
     }
   },
   methods: {
+    // Get visible prop of field
+    fieldVisible (field) {
+      if (isFunction(field.visible)) { return field.visible.call(this, this.model, field, this) }
 
+      if (isNil(field.visible)) { return true }
+
+      return field.visible
+    },
+    // Get disabled attr of field
+    fieldDisabled (field) {
+      if (isFunction(field.disabled)) { return field.disabled.call(this, this.model, field, this) }
+
+      if (isNil(field.disabled)) { return false }
+
+      return field.disabled
+    },
+
+    // Get required prop of field
+    fieldRequired (field) {
+      if (isFunction(field.required)) { return field.required.call(this, this.model, field, this) }
+
+      if (isNil(field.required)) { return false }
+
+      return field.required
+    },
+    // Get readonly prop of field
+    fieldReadonly (field) {
+      if (isFunction(field.readonly)) { return field.readonly.call(this, this.model, field, this) }
+
+      if (isNil(field.readonly)) { return false }
+
+      return field.readonly
+    },
+    // Get type of field 'field-xxx'. It'll be the name of HTML element
+    getFieldType (fieldSchema) {
+      return 'field-' + fieldSchema.type
+    },
+    // Should field type have a label?
+    fieldTypeHasLabel (field) {
+      if (isNil(field.label)) return false
+
+      let relevantType = ''
+      if (field.type === 'input') {
+        relevantType = field.inputType
+      } else {
+        relevantType = field.type
+      }
+
+      switch (relevantType) {
+        case 'button':
+        case 'submit':
+        case 'reset':
+          return false
+        default:
+          return true
+      }
+    },
+    getFieldID (schema) {
+      const idPrefix = this.options && this.options.fieldIdPrefix ? this.options.fieldIdPrefix : ''
+      return slugifyFormID(schema, idPrefix)
+    },
+    buttonVisibility (field) {
+      return field.buttons && field.buttons.length > 0
+    },
+    // Get current hint.
+    fieldHint (field) {
+      if (isFunction(field.hint)) { return field.hint.call(this, this.model, field, this) }
+
+      return field.hint
+    },
     reviewDimensions: function () {
-      console.log('reviewDimensions')
       if (this.minw > this.w) this.width = this.minw
       if (this.minh > this.h) this.height = this.minh
       if (this.parent) {
@@ -373,15 +496,12 @@ export default {
         if ((this.x + this.w) > this.parentW) this.width = parentW - this.x
         if ((this.y + this.h) > this.parentH) this.height = parentH - this.y
       }
-      console.log(this.elmW, this.width)
       this.elmW = this.width
-      console.log(this.elmW, this.width)
       this.elmH = this.height
       this.$emit('resizing', this.left, this.top, this.width, this.height, this.indexpos)
     },
 
     elmDown: function (e) {
-      console.log('elmDown')
       const target = e.target || e.srcElement
       if (this.$el.contains(target)) {
         if (
@@ -403,7 +523,6 @@ export default {
     },
 
     deselect: function (e) {
-      console.log('deselect')
       if (e.type.indexOf('touch') !== -1) {
         this.mouseX = e.changedTouches[0].clientX
         this.mouseY = e.changedTouches[0].clientY
@@ -426,7 +545,6 @@ export default {
     },
 
     handleDown: function (handle, e) {
-      console.log('handleDown')
       this.handle = handle
       if (e.stopPropagation) e.stopPropagation()
       if (e.preventDefault) e.preventDefault()
@@ -434,7 +552,6 @@ export default {
     },
 
     fillParent: function (e) {
-      console.log('fillParent')
       if (!this.parent || !this.resizable || !this.maximize) return
       let done = false
       const animate = () => {
@@ -485,7 +602,6 @@ export default {
     },
 
     handleMove: function (e) {
-      console.log('handleMove')
       const isTouchMove = e.type.indexOf('touchmove') !== -1
 
       this.mouseX = isTouchMove
@@ -533,8 +649,6 @@ export default {
           if (this.elmW + dX < this.minw) this.mouseOffX = (dX - (diffX = this.minw - this.elmW))
 
           else if (this.parent && this.elmX + this.elmW + dX > this.parentW) this.mouseOffX = (dX - (diffX = this.parentW - this.elmX - this.elmW))
-
-          console.log('width')
           this.elmW += diffX
         }
 
@@ -542,17 +656,17 @@ export default {
         this.top = (Math.round(this.elmY / this.grid[1]) * this.grid[1])
         this.width = (Math.round(this.elmW / this.grid[0]) * this.grid[0])
         this.height = (Math.round(this.elmH / this.grid[1]) * this.grid[1])
-        if (this.datos.width !== this.width && (this.width / this.grid[0] + this.datos[this.preview + '_offset']) <= 12) {
+        if ((this.datos.width === undefined) || (this.datos.width !== this.width && (this.width / this.grid[0] + this.datos.offset / this.grid[0]) <= 12)) {
           this.datos[this.preview] = this.width / this.grid[0]
           this.datos.width = this.width
         }
-        if (this.datos.offset !== this.left + this.col.data.offset) {
-          if (this.col.data[this.preview + '_offset'] !== undefined && (this.datos[this.preview] + this.left / this.grid[0] + this.col.data[this.preview + '_offset']) <= 12) {
-            this.datos[this.preview + '_offset'] = (this.left / this.grid[0] + this.col.data[this.preview + '_offset'])
-            this.datos.offset = this.left + this.col.data.offset
-          } else if ((this.datos[this.preview] + (this.left + this.col.data.offset) / this.grid[0]) <= 12) {
-            this.datos[this.preview + '_offset'] = ((this.left + this.col.data.offset) / this.grid[0])
-            this.datos.offset = this.left + this.col.data.offset
+        if (this.datos.offset !== this.left + this.field.offset) {
+          if (this.field[this.preview + '_offset'] !== undefined && (this.datos[this.preview] + this.left / this.grid[0] + this.field[this.preview + '_offset']) <= 12) {
+            this.datos[this.preview + '_offset'] = (this.left / this.grid[0] + this.field[this.preview + '_offset'])
+            this.datos.offset = this.left + this.field.offset
+          } else if ((this.datos[this.preview] + (this.left + this.field.offset) / this.grid[0]) <= 12) {
+            this.datos[this.preview + '_offset'] = ((this.left + this.field.offset) / this.grid[0])
+            this.datos.offset = this.left + this.field.offset
           }
         }
         if (this.datos[this.preview + '_offset'] < 0) {
@@ -580,13 +694,10 @@ export default {
         if (this.axis === 'y' || this.axis === 'both') {
           this.top = (Math.round(this.elmY / this.grid[1]) * this.grid[1])
         }
-
-        this.$emit('dragging', this.left, this.top, this.indexpos)
       }
     },
 
     handleUp: function (e) {
-      console.log('handleUp')
       if (e.type.indexOf('touch') !== -1) {
         this.lastMouseX = e.changedTouches[0].clientX
 
@@ -659,7 +770,64 @@ export default {
 
 </script>
 
-<style scoped>
+<style scoped  lang="scss">
+  span.help {
+      margin-left: 0.3em;
+      position: relative;
+
+      .icon {
+        display: inline-block;
+        width: 16px;
+        height: 14px;
+        background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABmJLR0QA/wD/AP+gvaeTAAAA+UlEQVQ4ja3TS0oDQRAG4C8+lq7ceICICoLGK7iXuNBbeAMJuPVOIm7cqmDiIncIggg+cMZFaqCnZyYKWtB0df31V1VXdfNH6S2wD9CP8xT3KH8T9BiTcE7XBMOfyBcogvCFO9ziLWwFRosyV+QxthNsA9dJkEYlvazsQdi3sBv6Ol6TBLX+HWT3fcQZ3vGM5fBLk+ynAU41m1biCXvhs4OPBDuBpa6GxF0P8YAj3GA1d1qJfdoS4DOIcIm1DK9x8iaWeDF/SP3QU6zRROpjLDFLsFlibx1jJaMkSIGrWKntvItcyTBKzCcybsvc9ZmYz3kz9Ooz/b98A8yvW13B3ch6AAAAAElFTkSuQmCC');
+        background-repeat: no-repeat;
+        background-position: center center;
+
+      } // .icon
+
+      .helpText {
+        background-color: #444;
+        bottom: 30px;
+        color: #fff;
+        display: block;
+        left: 0px;
+        //margin-bottom: 15px;
+        opacity: 0;
+        padding: 20px;
+        pointer-events: none;
+        position: absolute;
+        text-align: justify;
+        width: 300px;
+        //transform: translateY(10%);
+        transition: all .25s ease-out;
+        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.5);
+        border-radius: 6px;
+
+        a {
+          font-weight: bold;
+          text-decoration: underline;
+        } // a
+
+      } // .helpText
+
+      /* This bridges the gap so you can mouse into the tooltip without it disappearing */
+      .helpText:before {
+        bottom: -20px;
+        content: " ";
+        display: block;
+        height: 20px;
+        left: 0;
+        position: absolute;
+        width: 100%;
+      }
+
+      &:hover .helpText {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0px);
+      }
+
+    } // span.help
 
   .vdr {
 
