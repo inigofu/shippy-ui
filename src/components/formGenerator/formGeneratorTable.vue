@@ -1,6 +1,6 @@
 <template lang="pug">
-div.vue-form-generator(v-if='schema != null')
-  b-table(v-if='schema.groups[0].fields', :items='model' :fields='fields')
+div.vue-form-generator(v-if='schema')
+  b-table(v-if='schema.fields', :items='model' :fields='fields')
     template(slot='actions', slot-scope='row')
       b-button(size='sm', @click.stop='row.toggleDetails')
         | {{ row.detailsShowing ? 'Hide' : 'Show' }} Details
@@ -15,16 +15,16 @@ div.vue-form-generator(v-if='schema != null')
 import { get as objGet, forEach, isFunction, isNil, isArray, isString } from 'lodash'
 import { slugifyFormID } from './utils/schema'
 import VueFormGenerator from '../../components/formGenerator/formGenerator.vue'
+import { mapState } from 'vuex'
 
 export default {
   components: {
     VueFormGenerator
   },
   props: {
-    schema: Object,
-
     model: Array,
-
+    index: null,
+    modulename: null,
     options: {
       type: Object,
       default () {
@@ -64,19 +64,34 @@ export default {
   },
 
   computed: {
+    ...mapState({
+      schema (state) {
+        return state[this.modulename].schema.tabs[this.index]
+      }
+    }),
     fields () {
       let res = []
-      if (this.schema && this.schema.groups[0].fields) {
-        forEach(this.schema.groups[0].fields, (field) => {
-          if (!this.multiple || field.multi === true) {
-            let tempfield = field
-            tempfield['key'] = field.model
-            res.push(tempfield)
+      if (this.schema && this.schema.fields) {
+        forEach(this.schema.fields, (field) => {
+          let tempfield = field
+          tempfield['key'] = field.model
+          res.push(tempfield)
+        })
+      }
+      if (this.schema && this.schema.groups) {
+        forEach(this.schema.groups, (group) => {
+          if (group.fields) {
+            forEach(group.fields, (field) => {
+              let tempfield = field
+              tempfield['key'] = field.model
+              res.push(tempfield)
+            })
           }
         })
+      }
+      if (res.length > 0) {
         res.push({ key: 'actions', label: 'Actions' })
       }
-
       return res
     },
     groups () {

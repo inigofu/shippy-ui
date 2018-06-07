@@ -44,5 +44,6 @@
   margin-left: -10px;
   left: 5px;
   cursor: col-resize;
+  background: rgb(164, 183, 193);
 }
 </style>

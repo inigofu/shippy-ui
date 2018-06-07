@@ -2,11 +2,11 @@
 <div class="wrapper">
 <multipane class="custom-resizer" v-resize="onResize" layout="vertical" v-on:paneResize="paneResizeStop">
   <div v-bind:class="[model ? 'd-none d-lg-block' : '' ,'pane']" v-bind:style="{minWidth: '20%' , width: panWidth}">
-    <data-table :rows="rows" :fields="fields" :selected="selected" :select="selectRow" :stacked="stacked"></data-table>
+    <data-table :rows="rows" :fields="fields" :select="selectRow" :stacked="stacked"></data-table>
   </div>
-  <multipane-resizer v-bind:class="[model ? 'd-none d-lg-block' : '']"></multipane-resizer>
+  <multipane-resizer class="d-none d-lg-block"></multipane-resizer>
   <div v-bind:class="[model ? '' : 'd-none d-lg-block' ,'pane']" :style="{ flexGrow: 1, maxWidth:'100%', width: '20%' }">
-    <div class="horizontal-panes">
+    <div>
       <div class="control-buttons text-center">
         <b-button @click="newModel" class="btn btn-default new"> <i class="fa fa-plus"></i>New</b-button>
         <b-button @click="saveModel" class="btn btn-primary save"> <i class="fa fa-floppy-o"></i>Save<i v-if="showWarning()" class="fa fa-warning"></i></b-button>
@@ -16,21 +16,21 @@
       <div class="errors text-center">
         <div v-for="(item, index) in validationErrors" :key=index track-by="index" class="alert alert-danger">{{ item.field.label}}: <strong>{{ item.error }}</strong></div>
       </div>
-      <vue-form-generator :schema="schemaCopia" :model="model" :options="formOptions" :multiple="selected.length>1" > 1" ref="form" :is-new-model="isNewModel" @model-updated="modelUpdated" @validated="onValidated"></vue-form-generator>
+      <vue-form-generator :schema="schema" :model="model" :options="formOptions" ref="form" :is-new-model="isNewModel" @validated="onValidated"></vue-form-generator>
     </div>
-    <div class="horizontal-panes">
+    <div>
       <b-tabs >
         <b-tab v-for="(tab,index) in schematabs"  :key="tab.tabs.id" v-bind:title= "tab.tabs.name">
           <div class="control-buttons text-center">
             <b-button @click="newLine(tab.tabs.name, index)" class="btn btn-default new"> <i class="fa fa-plus"></i>New line</b-button>
           </div>
-          <vue-form-generator-table :schema="tab.tabs" :model="tab.model" :options="formOptions" :multiple="selected.length > 1" :is-new-model="isNewModel"></vue-form-generator-table>
+          <vue-form-generator-table :index="index" :model="tab.model" :modulename="modulename" :options="formOptions" :is-new-model="isNewModel"></vue-form-generator-table>
         </b-tab>
       </b-tabs>
     </div>
   </div>
 </multipane>
-<gridcarrusel  :schema="schemaCopia" v-model="schemaCopia" :gridModal="gridModal" @close="handleClose"/>
+<gridcarrusel  :gridModal="gridModal" @close="handleClose" :modulename="modulename" />
 <b-modal ref="beforegridModal">
     Hello From My Modal!
 </b-modal>
@@ -39,13 +39,14 @@
 
 <script>
 import Vue from 'vue'
+import { mapState, mapActions } from 'vuex'
 import VueFormGenerator from '../../components/formGenerator/formGenerator.vue'
 import gridcarrusel from '../../components/formGenerator/gridCarrusel.vue'
 import VueFormGeneratorTable from '../../components/formGenerator/formGeneratorTable.vue'
 import { Multipane, MultipaneResizer } from '../../components/multipane'
 import DataTable from './dataTable.vue'
 import { filters } from './utils'
-import { isFunction, isArray, set, get, each, cloneDeep, isObject, merge } from 'lodash'
+import { isFunction, isArray, set, get, each, cloneDeep, isObject } from 'lodash'
 import FieldAwesome from './fieldAwesome.vue'
 import Multiselect from 'vue-multiselect'
 import resize from 'vue-resize-directive'
@@ -55,7 +56,6 @@ Vue.component('multiselect', Multiselect)
 // Test custom field
 
 Vue.component('fieldAwesome', FieldAwesome)
-
 // Vue.use(VueFormGenerator)
 
 export default {
@@ -73,14 +73,14 @@ export default {
   filters: filters,
   props: [
     'propID',
-    'schema',
-    'fields',
-    'rows'
+    'modulename'
+    // 'schema',
+    // 'fields',
+    // 'rows'
   ],
   data () {
     return {
       isNewModel: false,
-      selected: [],
       stacked: true,
       panWidth: '20%',
       changed: false,
@@ -88,6 +88,7 @@ export default {
       model: null,
       gridModal: false,
       schemaCopia: this.schema,
+      modulename2: 'forms',
       formOptions: {
         validateAfterLoad: true,
         validateAfterChanged: true,
@@ -95,8 +96,16 @@ export default {
       }
     }
   },
-
   computed: {
+    ...mapState({
+      schema: state => state.forms.schema,
+      rows (state) {
+        return state[this.modulename].rows
+      },
+      fields (state) {
+        return state[this.modulename].fields
+      }
+    }),
     validationErrors () {
       if (this.$refs.form && this.$refs.form.errors) { return this.$refs.form.errors }
 
@@ -106,17 +115,16 @@ export default {
       return this.propID
     },
     schematabs () {
-      console.log('schematabs', this.schemaCopia, this.model)
-      if (this.schemaCopia.tabs !== undefined && this.model !== null) {
-        return this.schemaCopia.tabs.map(function (tab, index, array) {
+      if (this.schema.tabs !== undefined && this.model !== null && this.model !== undefined) {
+        return this.schema.tabs.map(function (tab, index, array) {
           return {
             tabs: tab,
             model: this.model[tab.name],
             modelstring: 'this.model.' + tab.name
           }
         }, this)
-      } else if (this.schemaCopia.tabs !== undefined) {
-        return this.schemaCopia.tabs.map(function (tab, index, array) {
+      } else if (this.schema.tabs !== undefined) {
+        return this.schema.tabs.map(function (tab, index, array) {
           return {
             tabs: tab,
             model: [],
@@ -130,16 +138,33 @@ export default {
   },
   watch: {
     id: function (newId, oldId) {
-      var row = this.rows.filter((p) => {
-        return p.id === newId
-      })
-      this.clearSelection()
-      this.selected.push(row[0])
-      // }
-      this.generateModel()
+      if (newId === 'new') {
+        let newRow = this.createDefaultObject(this.schema)
+        this.isNewModel = true
+        this.model = newRow
+        let el = document.querySelector('div.form input:nth-child(1):not([readonly]):not(:disabled)')
+        if (el) { el.focus() }
+      } else {
+        var row = this.rows.filter((p) => {
+          return p.id === newId
+        })
+        this.isNewModel = false
+        this.model = cloneDeep(row[0])
+      }
     }
   },
   methods: {
+    ...mapActions({
+      saveModelVuex (dispatch, payload) {
+        return dispatch(this.modulename + '/saveModel', payload)
+      },
+      addModelVuex (dispatch, payload) {
+        return dispatch(this.modulename + '/addModel', payload)
+      },
+      deleteModelVuex (dispatch, payload) {
+        return dispatch(this.modulename + '/deleteModel', payload)
+      }
+    }),
     handleClose (status) {
       this.gridModal = status
     },
@@ -165,115 +190,59 @@ export default {
 
     selectRow (record, id) {
       this.isNewModel = false
-      /* if ((add || (event && event.ctrlKey))) {
-        if (this.selected.indexOf(row) !== -1) {
-          var index = this.selected.indexOf(row)
-          this.selected.splice(index, 1)
-        } else {
-          this.selected.push(row)
-        }
-      } else { */
       this.rowSelected = true
       this.changed = false
       this.$router.push('/form/' + record.id)
     },
-
-    clearSelection () {
-      this.selected.splice(0)
-      this.generateModel()
-    },
-
     onValidated (res, errors) {
       console.log('VFG validated:', res, errors)
     },
-
-    generateModel () {
-      if (this.selected.length === 1) {
-        this.model = cloneDeep(this.selected[0])
-      } else if (this.selected.length > 1) {
-        this.model = this.mergeMultiObjectFields(this.schema, this.selected)
-      } else {
-        this.model = null
-      }
-    },
     newModel () {
-      console.log('Create new model...')
-      this.selected.splice(0)
-      let newRow = this.createDefaultObject(this.schema, { id: this.getNextID() })
-      this.isNewModel = true
-      this.model = newRow
-
-      let el = document.querySelector('div.form input:nth-child(1):not([readonly]):not(:disabled)')
-      if (el) { el.focus() }
+      this.$router.push('/form/new')
     },
     newLine (tabid, tabindex) {
-      console.log('newline', tabid)
-      let newRow = this.createDefaultObject(this.schemaCopia.tabs[tabindex], { id: '1' })
-      if (this.model[tabid] === undefined) {        
+      let newRow = this.createDefaultObject(this.schema.tabs[tabindex], { id: '1' })
+      if (this.model[tabid] === undefined) {
         Vue.set(this.model, tabid, [newRow])
-        console.log('newline 1', this.model, newRow)
       } else {
         this.model[tabid].push(newRow)
-        console.log('newline 2', this.model)
       }
     },
     saveModel () {
-      console.log('Save model...')
       if (this.formOptions.validateBeforeSave === false || this.validate()) {
-        this.mergeModelValues()
-
         if (this.isNewModel) {
-          this.rows.push(this.model)
-          
-          this.$emit('addModelEvent', this.model)
+          this.addModelVuex(this.model)
+            .then(response => { this.$router.push('/form/' + response) })
+            .catch(response => {
+              // fail
+            })
         } else {
-          this.$emit('saveModelEvent', this.model)
+          this.saveModelVuex(this.model)
         }
       } else {
         console.warn('Error saving model...')
         // Validation error
       }
     },
-
-    mergeModelValues () {
-      let model = this.model
-      if (model && this.selected.length > 0) {
-        each(this.selected, (row) => {
-          merge(row, model)
-        })
-      }
-    },
-
     deleteModel () {
-      if (this.selected.length > 0) {
-        each(this.selected, (row) => {
-          let index = this.rows.indexOf(row)
-          this.$emit('deleteModelEvent', this.model)
-          this.rows.splice(index, 1)
+      this.deleteModelVuex(this.model)
+        .then(response => { this.$router.push('/form/' + this.rows[response].id) })
+        .catch(response => {
+          // fail
         })
-        this.clearSelection()
-      }
     },
-
     getNextID () {
       let id = 0
-
       each(this.rows, (row) => {
         if (row.id > id) { id = row.id }
       })
 
       return ++id
     },
-
     validate () {
       // console.log('validate', this.$refs.form, this.$refs.form.validate())
       return true // this.$refs.form.validate()
     },
-
-    modelUpdated (newVal, schema) {
-      console.log('main model has updated', newVal, schema)
-    },
-
     getLocation (model) {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition((pos) => {

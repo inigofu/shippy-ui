@@ -1,4 +1,4 @@
-<template>
+template>
   <div class="wrapper">
     <template v-if="schemaLoaded">
     <customForm :propID="id" :modulename="modulename"> </customForm>
