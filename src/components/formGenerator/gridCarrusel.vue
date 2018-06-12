@@ -15,11 +15,11 @@
 
             <!-- Text slides with image -->
             <b-carousel-slide :caption="schema.name">
-                <griddesigner  :schema="schema" v-model="grid"/>
+                <griddesigner  :schema="schema" @input="updateGrid"/>
             </b-carousel-slide>
             <!-- Slides with custom text -->
-            <b-carousel-slide v-for="(tab,index) in schema.tabs" :key="index" :caption="'Tab-' + tab.name">
-                <griddesigner  :schema="tab" v-model="tabs[index]"/>
+            <b-carousel-slide v-for="(tab,index) in tabs" :key="index" :caption="'Tab-' + tab.name" >
+                <griddesigner  :schema="tab" @input="updateTabs($event,index)"/>
             </b-carousel-slide>
             </b-carousel>
     </template>
@@ -28,19 +28,28 @@
 
 <script>
 import griddesigner from './gridDesigner'
+import { mapState, mapActions } from 'vuex'
+import {clone} from 'lodash'
+
 export default {
   name: 'gridcarrusel',
   props: {
-    schema: Object,
     gridModal: {
       type: Boolean,
       default: false
+    },
+    modulename: null,
+    moduleurl: null
+  },
+  watch: {
+    schema (newSchema, oldSchema) {
+      this.grid = clone(newSchema)
+      this.tabs = clone(newSchema.tabs)
     }
   },
   created () {
-    console.log('created carrusel', this.schema)
-    this.grid = this.schema
-    this.tabs = this.schema.tabs
+    this.grid = clone(this.schema)
+    this.tabs = clone(this.schema.tabs)
     this.dataLoaded = true
   },
   data () {
@@ -48,13 +57,29 @@ export default {
       grid: Object,
       tabs: Array,
       slide: 0,
-      dataLoaded: false
+      dataLoaded: false,
+      tempSchema: null
     }
   },
   components: {
     griddesigner
   },
+  computed: {
+    ...mapState({
+      schema: state => state.form.schema
+    })
+  },
   methods: {
+    ...mapActions({
+      setSchema: 'form/saveLayout'
+    }),
+    updateGrid (e) {
+      this.grid = e
+    },
+    updateTabs (e, index) {
+      console.log(e)
+      this.tabs[index] = e
+    },
     handleClose (evt) {
       this.$emit('close', false)
     },
@@ -71,32 +96,19 @@ export default {
         input = this.grid
       }
       for (let i = 0; i < input.tabs.length; i++) {
-        let input2 = {}
-        input2 = input.tabs[i].groups[0]
-        input2.id = input.tabs[i].id
-        input2.name = input.tabs[i].name
-        this.$http.post('/rpc', {
-          request: input2,
-          service: 'shippy.auth',
-          method: 'Auth.UpdateForm'
-        })
-          .then(({ data }) => {
-            console.log(data.form)
-          }).catch((error) => {
-            throw error
-          })
+        if (input.tabs[i].groups.length === 1) {
+          let input2 = {}
+          input2 = input.tabs[i].groups[0]
+          input2.id = input.tabs[i].id
+          input2.name = input.tabs[i].name
+          input.tabs[i] = input2
+        }
       }
-      this.$http.post('/rpc', {
-        request: input,
-        service: 'shippy.auth',
-        method: 'Auth.UpdateForm'
-      })
-        .then(({ data }) => {
-          console.log(data.form)
-        }).catch((error) => {
-          throw error
+      this.setSchema(input)
+        .then(response => { this.$router.push('/' + this.moduleurl + '/' + response) })
+        .catch(response => {
+          console.log(response)
         })
-      this.$emit('input', input)
     }
   }
 }

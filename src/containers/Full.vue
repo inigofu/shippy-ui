@@ -57,8 +57,8 @@ export default {
           .then(({ data }) => {
             if (data.token.valid) {
               this.$http.defaults.headers.common['Authorization'] = token ? `Bearer ${token}` : ''
-              store.commit('SET_TOKEN', token)
-              store.commit('SET_USER', data.user)
+              store.commit('token/SET_TOKEN', token)
+              store.commit('user/SET_USER', data.user)
               this.$http.post('/rpc', {
                 request: {
                   email: data.user.email

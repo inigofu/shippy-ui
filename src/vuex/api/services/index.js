@@ -1,7 +1,9 @@
-import products from './products'
-import forms from './forms'
+import form from './form'
+import roles from './roles'
+import users from './users'
 
 export default {
-  products,
-  forms
+  form,
+  roles,
+  users
 }

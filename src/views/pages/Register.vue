@@ -83,7 +83,7 @@ export default {
       })
         .then(({ data }) => {
           var token = data.token
-          store.commit('SET_TOKEN', token)
+          store.commit('token/SET_TOKEN', token)
           // Save to local storage as well
           if (window.localStorage) {
             window.localStorage.setItem('token', token)

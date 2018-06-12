@@ -129,21 +129,13 @@ export default {
       preview: 'md'
     }
   },
-  mounted () {
-    console.log('mounted', this.schema)
-    if (this.schema.groups === undefined) {
-      this.grid = {
-        groups: [],
-        name: null,
-        id: null
-      }
-      this.grid.groups = [{legend: 'New row',
-        fields: this.schema.fields}]
-      this.grid.name = this.schema.name
-      this.grid.id = this.schema.id
-    } else {
-      this.grid = this.schema
+  watch: {
+    schema () {
+      this.gridUpdate()
     }
+  },
+  mounted () {
+    this.gridUpdate()
     this.selectPreview('md')
   },
   computed: {
@@ -161,6 +153,21 @@ export default {
     draggable
   },
   methods: {
+    gridUpdate () {
+      if (this.schema.groups === undefined) {
+        this.grid = {
+          groups: [],
+          name: null,
+          id: null
+        }
+        this.grid.groups = [{legend: 'New row',
+          fields: this.schema.fields}]
+        this.grid.name = this.schema.name
+        this.grid.id = this.schema.id
+      } else {
+        this.grid = this.schema
+      }
+    },
     onChange () {
       this.$emit('input', this.grid)
     },
@@ -290,7 +297,6 @@ export default {
       let previewcol = {}
       previewcol.groups = []
       for (i = 0; i < this.grid.groups.length; i++) {
-        console.log('selecPreview for', this.grid)
         previewcol.groups.push({fields: this.grid.groups[i].fields.map(function (obj, index, array) {
           let width = 880
           let offset = 0

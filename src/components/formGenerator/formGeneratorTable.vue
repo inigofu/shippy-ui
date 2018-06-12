@@ -1,12 +1,12 @@
 <template lang="pug">
-div.vue-form-generator(v-if='schema != null')
-  b-table(v-if='schema.groups[0].fields', :items='model' :fields='fields')
-    template(slot='actions', slot-scope='row')
-      b-button(size='sm', @click.stop='row.toggleDetails')
-        | {{ row.detailsShowing ? 'Hide' : 'Show' }} Details
+div.vue-form-generator(v-if='schema')
+  b-table(v-if='schema.fields', :items='model' :fields='fields' @row-clicked="myRowClickHandler")
     template(slot='row-details', slot-scope='row')
       b-card
         vue-form-generator(:schema='schema' :model='row.item' :options='options' :multiple='multiple' :isNewModel='isNewModel')
+        b-button(@click="deleteLine(row.item)" class="btn btn-danger delete")
+         i.fa.fa-trash
+         | Delete line
 
 </template>
 
@@ -15,16 +15,18 @@ div.vue-form-generator(v-if='schema != null')
 import { get as objGet, forEach, isFunction, isNil, isArray, isString } from 'lodash'
 import { slugifyFormID } from './utils/schema'
 import VueFormGenerator from '../../components/formGenerator/formGenerator.vue'
+import { mapState, mapActions } from 'vuex'
 
 export default {
   components: {
     VueFormGenerator
   },
   props: {
-    schema: Object,
-
     model: Array,
-
+    index: null,
+    parentid: null,
+    modulename: null,
+    name: null,
     options: {
       type: Object,
       default () {
@@ -37,17 +39,14 @@ export default {
         }
       }
     },
-
     multiple: {
       type: Boolean,
       default: false
     },
-
     isNewModel: {
       type: Boolean,
       default: false
     },
-
     tag: {
       type: String,
       default: 'fieldset',
@@ -64,19 +63,31 @@ export default {
   },
 
   computed: {
+    ...mapState({
+      schema (state) {
+        return state.form.schema.tabs[this.index]
+      }
+    }),
     fields () {
       let res = []
-      if (this.schema && this.schema.groups[0].fields) {
-        forEach(this.schema.groups[0].fields, (field) => {
-          if (!this.multiple || field.multi === true) {
-            let tempfield = field
-            tempfield['key'] = field.model
-            res.push(tempfield)
+      if (this.schema && this.schema.fields) {
+        forEach(this.schema.fields, (field) => {
+          let tempfield = field
+          tempfield['key'] = field.model
+          res.push(tempfield)
+        })
+      }
+      if (this.schema && this.schema.groups) {
+        forEach(this.schema.groups, (group) => {
+          if (group.fields) {
+            forEach(group.fields, (field) => {
+              let tempfield = field
+              tempfield['key'] = field.model
+              res.push(tempfield)
+            })
           }
         })
-        res.push({ key: 'actions', label: 'Actions' })
       }
-
       return res
     },
     groups () {
@@ -125,6 +136,24 @@ export default {
   },
 
   methods: {
+    ...mapActions({
+      deleteLineVuex (dispatch, payload) {
+        return dispatch(this.modulename + '/' + this.name + '/deleteLine', payload)
+      }
+    }),
+    deleteLine (row) {
+      let deletemodel = {
+        id: this.parentid
+      }
+      deletemodel[this.name] = [row]
+      console.log(deletemodel)
+      this.deleteLineVuex(deletemodel)
+    },
+    myRowClickHandler (record, index) {
+      // 'record' will be the row data from items
+      // `index` will be the visible row number (available in the v-model 'shownItems')
+      this.$set(this.model[index], '_showDetails', !this.model[index]._showDetails)
+    },
     // Get style classes of field
     getFieldRowClasses (field) {
       const hasErrors = this.fieldErrors(field).length > 0
