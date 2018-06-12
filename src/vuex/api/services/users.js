@@ -7,7 +7,7 @@ export default {
         request: {
         },
         service: 'shippy.auth',
-        method: 'Auth.GetAll'
+        method: 'Auth.GetAllUsersRole'
       })
         .then(({ data }) => {
           resolve(data.users)
