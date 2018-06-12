@@ -28,7 +28,7 @@ const mutations = {
 
 const actions = {
   getSchema ({ commit, state }, formId) {
-    services.forms.getSchema(formId)
+    services.form.getSchema(formId)
       .then((response) => {
         commit('setSchema', response)
         commit('setSchemaLoaded', true)
@@ -38,7 +38,7 @@ const actions = {
       })
   },
   getModel ({ commit, state }) {
-    services.forms.getModel()
+    services.form.getModel()
       .then((response) => {
         commit('setRows', response)
       })
@@ -48,7 +48,7 @@ const actions = {
   },
   saveModel ({ commit, state }, model) {
     return new Promise((resolve, reject) => {
-      services.forms.saveModel(model)
+      services.form.saveModel(model)
         .then((response) => {
           let tempRows = clone(state.rows)
           let temp = tempRows.filter(function (e) {
@@ -65,7 +65,7 @@ const actions = {
   },
   addModel ({ commit, state }, model) {
     return new Promise((resolve, reject) => {
-      services.forms.addModel(model)
+      services.form.addModel(model)
         .then((response) => {
           let tempRows = clone(state.rows)
           tempRows.push(response.form)
@@ -80,7 +80,7 @@ const actions = {
   deleteModel ({ commit, state }, model) {
     console.log('action delete model')
     return new Promise((resolve, reject) => {
-      services.forms.deleteModel(model)
+      services.form.deleteModel(model)
         .then((response) => {
           let tempRows = clone(state.rows)
           let temp = tempRows.filter(function (e) {
@@ -99,7 +99,7 @@ const actions = {
   },
   saveLayout ({ commit, state }, input) {
     return new Promise((resolve, reject) => {
-      services.forms.saveModel(input)
+      services.form.saveModel(input)
         .then((data) => {
           console.log('saved', data, input)
           commit('setSchema', data.form)
@@ -111,8 +111,42 @@ const actions = {
   }
 }
 
+const modules = {
+  fields: {
+    namespaced: true,
+    actions: {
+      deleteLine ({ commit, state, dispatch }, input) {
+        return new Promise((resolve, reject) => {
+          services.form.deleteField(input)
+            .then((data) => {
+              resolve()
+            }).catch((error) => {
+              reject(error)
+            })
+        })
+      }
+    }
+  },
+  tabs: {
+    namespaced: true,
+    actions: {
+      deleteLine ({ commit, state, dispatch }, input) {
+        return new Promise((resolve, reject) => {
+          services.form.deleteTab(input)
+            .then((data) => {
+              resolve()
+            }).catch((error) => {
+              reject(error)
+            })
+        })
+      }
+    }
+  }
+}
+
 export default {
   state,
   mutations,
-  actions
+  actions,
+  modules
 }

@@ -1,7 +1,7 @@
 <template>
   <div class="wrapper">
     <template v-if="schemaLoaded">
-    <customForm :propID="id" :modulename="modulename"> </customForm>
+    <customForm :propID="id" :modulename="modulename" :moduleurl="moduleurl"> </customForm>
     </template>
   </div>
 </template>
@@ -17,7 +17,8 @@ export default {
   data () {
     return {
       id: null,
-      modulename: 'forms',
+      modulename: 'form',
+      moduleurl: 'form',
       schema: {},
       fields: ['id',
         'name'],
@@ -36,13 +37,13 @@ export default {
   },
   computed: {
     ...mapState({
-      schemaLoaded: state => state.forms.schemaLoaded
+      schemaLoaded: state => state.form.schemaLoaded
     })
   },
   methods: {
     ...mapActions({
-      getSchemaVuex: 'forms/getSchema',
-      getModelVuex: 'forms/getModel'
+      getSchemaVuex: 'form/getSchema',
+      getModelVuex: 'form/getModel'
     })
   }
 }

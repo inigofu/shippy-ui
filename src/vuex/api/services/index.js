@@ -1,5 +1,9 @@
-import forms from './forms'
+import form from './form'
+import roles from './roles'
+import users from './users'
 
 export default {
-  forms
+  form,
+  roles,
+  users
 }

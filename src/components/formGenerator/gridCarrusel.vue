@@ -38,7 +38,8 @@ export default {
       type: Boolean,
       default: false
     },
-    modulename: null
+    modulename: null,
+    moduleurl: null
   },
   watch: {
     schema (newSchema, oldSchema) {
@@ -65,17 +66,18 @@ export default {
   },
   computed: {
     ...mapState({
-      schema: state => state.forms.schema
+      schema: state => state.form.schema
     })
   },
   methods: {
     ...mapActions({
-      setSchema: 'forms/saveLayout'
+      setSchema: 'form/saveLayout'
     }),
     updateGrid (e) {
       this.grid = e
     },
     updateTabs (e, index) {
+      console.log(e)
       this.tabs[index] = e
     },
     handleClose (evt) {
@@ -103,7 +105,7 @@ export default {
         }
       }
       this.setSchema(input)
-        .then(response => { this.$router.push('/form/' + response) })
+        .then(response => { this.$router.push('/' + this.moduleurl + '/' + response) })
         .catch(response => {
           console.log(response)
         })

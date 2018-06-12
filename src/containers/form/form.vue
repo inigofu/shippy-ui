@@ -24,13 +24,13 @@
           <div class="control-buttons text-center">
             <b-button @click="newLine(tab.tabs.name, index)" class="btn btn-default new"> <i class="fa fa-plus"></i>New line</b-button>
           </div>
-          <vue-form-generator-table :index="index" :model="tab.model" :modulename="modulename" :options="formOptions" :is-new-model="isNewModel"></vue-form-generator-table>
+          <vue-form-generator-table :index="index" :model="tab.model" :name="tab.tabs.name" :parentid="id" :modulename="modulename" :options="formOptions" :is-new-model="isNewModel"></vue-form-generator-table>
         </b-tab>
       </b-tabs>
     </div>
   </div>
 </multipane>
-<gridcarrusel  :gridModal="gridModal" @close="handleClose" :modulename="modulename" />
+<gridcarrusel  :gridModal="gridModal" @close="handleClose" :modulename="modulename" :moduleurl="moduleurl" />
 <b-modal ref="beforegridModal">
     Hello From My Modal!
 </b-modal>
@@ -73,7 +73,8 @@ export default {
   filters: filters,
   props: [
     'propID',
-    'modulename'
+    'modulename',
+    'moduleurl'
     // 'schema',
     // 'fields',
     // 'rows'
@@ -88,7 +89,6 @@ export default {
       model: null,
       gridModal: false,
       schemaCopia: this.schema,
-      modulename2: 'forms',
       formOptions: {
         validateAfterLoad: true,
         validateAfterChanged: true,
@@ -98,7 +98,7 @@ export default {
   },
   computed: {
     ...mapState({
-      schema: state => state.forms.schema,
+      schema: state => state.form.schema,
       rows (state) {
         return state[this.modulename].rows
       },
@@ -192,13 +192,13 @@ export default {
       this.isNewModel = false
       this.rowSelected = true
       this.changed = false
-      this.$router.push('/form/' + record.id)
+      this.$router.push('/' + this.moduleurl + '/' + record.id)
     },
     onValidated (res, errors) {
       console.log('VFG validated:', res, errors)
     },
     newModel () {
-      this.$router.push('/form/new')
+      this.$router.push('/' + this.moduleurl + '/new')
     },
     newLine (tabid, tabindex) {
       let newRow = this.createDefaultObject(this.schema.tabs[tabindex], { id: '1' })
@@ -212,7 +212,7 @@ export default {
       if (this.formOptions.validateBeforeSave === false || this.validate()) {
         if (this.isNewModel) {
           this.addModelVuex(this.model)
-            .then(response => { this.$router.push('/form/' + response) })
+            .then(response => { this.$router.push('/' + this.moduleurl + '/' + response) })
             .catch(response => {
               // fail
             })
@@ -226,7 +226,7 @@ export default {
     },
     deleteModel () {
       this.deleteModelVuex(this.model)
-        .then(response => { this.$router.push('/form/' + this.rows[response].id) })
+        .then(response => { this.$router.push('/' + this.moduleurl + '/' + this.rows[response].id) })
         .catch(response => {
           // fail
         })
@@ -240,8 +240,8 @@ export default {
       return ++id
     },
     validate () {
-      // console.log('validate', this.$refs.form, this.$refs.form.validate())
-      return true // this.$refs.form.validate()
+      console.log('validate', this.$refs.form.validate())
+      return this.$refs.form.validate()
     },
     getLocation (model) {
       if (navigator.geolocation) {
@@ -266,7 +266,9 @@ export default {
     // Create a new model by schema default values
     createDefaultObject (schema, obj = {}) {
       each(schema.fields, (field) => {
+        console.log('createDefaultObject fields', field)
         if (get(obj, field.model) === undefined && field.default !== undefined) {
+          console.log('createDefaultObject default')
           if (isFunction(field.default)) {
             set(obj, field.model, field.default(field, schema, obj))
           } else if (isObject(field.default) || isArray(field.default)) {
@@ -294,6 +296,7 @@ export default {
         })
         i++
       })
+      console.log('createDefaultObject', obj)
       return obj
     },
     // Get a new model which contains only properties of multi-edit fields

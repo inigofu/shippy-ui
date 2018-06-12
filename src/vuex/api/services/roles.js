@@ -1,35 +1,16 @@
-import JSONfn from 'json-fn'
 import Api from './Api'
 
 export default {
-  getSchema (formid) {
-    return new Promise((resolve, reject) => {
-      Api().post('/rpc', {
-        request: {
-          id: formid
-        },
-        service: 'shippy.auth',
-        method: 'Auth.GetForm'
-      })
-        .then(({ data }) => {
-          let response = JSONfn.parse(JSONfn.stringify(data.form))
-          resolve(response)
-        })
-        .catch((error) => {
-          reject(error)
-        })
-    })
-  },
   getModel () {
     return new Promise((resolve, reject) => {
       Api().post('/rpc', {
         request: {
         },
         service: 'shippy.auth',
-        method: 'Auth.GetAllForms'
+        method: 'Auth.GetAllRoles'
       })
         .then(({ data }) => {
-          resolve(data.forms)
+          resolve(data.roles)
         }).catch((error) => {
           reject(error)
         })
@@ -40,7 +21,7 @@ export default {
       Api().post('/rpc', {
         request: model,
         service: 'shippy.auth',
-        method: 'Auth.UpdateForm'
+        method: 'Auth.UpdateRole'
       })
         .then(({ data }) => {
           resolve(data)
@@ -54,7 +35,7 @@ export default {
       Api().post('/rpc', {
         request: model,
         service: 'shippy.auth',
-        method: 'Auth.UpdateForm'
+        method: 'Auth.UpdateRole'
       })
         .then(({ data }) => {
           resolve(data)
@@ -68,7 +49,7 @@ export default {
       Api().post('/rpc', {
         request: model,
         service: 'shippy.auth',
-        method: 'Auth.DeleteForm'
+        method: 'Auth.DeleteRole'
       })
         .then(({ data }) => {
           resolve(data)

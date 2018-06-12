@@ -1,7 +1,7 @@
-template>
+<template>
   <div class="wrapper">
-    <template v-if="schemaLoaded">
-    <customForm :propID="id" :modulename="modulename"> </customForm>
+    <template v-if="schemaLoaded && modelLoaded">
+    <customForm :propID="id" :modulename="modulename" :moduleurl="moduleurl"> </customForm>
     </template>
   </div>
 </template>
@@ -10,18 +10,15 @@ import customForm from '../../containers/form/form'
 import { mapActions, mapState } from 'vuex'
 
 export default {
-  name: 'testform',
+  name: 'userform',
   components: {
     customForm
   },
   data () {
     return {
       id: null,
-      modulename: 'forms',
-      schema: {},
-      fields: ['id',
-        'name'],
-      rows: []
+      modulename: 'users',
+      moduleurl: 'admin/users'
     }
   },
   beforeRouteUpdate (to, from, next) {
@@ -29,20 +26,27 @@ export default {
     next()
   },
   mounted () {
-    this.getSchemaVuex('44e75d5d-13ac-44a8-a46c-dc4bcdef80bd')
+    this.getSchemaVuex('a98c0acd-ff66-482a-a8be-3f9be3c92e88')
     this.getModelVuex()
     // this.getSchema()
     // this.getData()
   },
   computed: {
     ...mapState({
-      schemaLoaded: state => state.forms.schemaLoaded
+      schemaLoaded: state => state.form.schemaLoaded,
+      modelLoaded (state) {
+        return state[this.modulename].modelLoaded
+      }
     })
   },
   methods: {
     ...mapActions({
-      getSchemaVuex: 'forms/getSchema',
-      getModelVuex: 'forms/getModel'
+      getSchemaVuex (dispatch, payload) {
+        return dispatch('form/getSchema', payload)
+      },
+      getModelVuex (dispatch, payload) {
+        return dispatch(this.modulename + '/getModel', payload)
+      }
     })
   }
 }

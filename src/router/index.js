@@ -74,12 +74,12 @@ export default new Router({
           },
           children: [
             {
-              path: 'roles',
+              path: 'roles/:id?',
               name: 'Roles',
               component: roles
             },
             {
-              path: 'users',
+              path: 'users/:id?',
               name: 'Users',
               component: users
             }

@@ -1,7 +1,7 @@
-template>
+<template>
   <div class="wrapper">
-    <template v-if="schemaLoaded">
-    <customForm :propID="id" :modulename="modulename"> </customForm>
+    <template v-if="schemaLoaded && modelLoaded">
+    <customForm :propID="id" :modulename="modulename" :moduleurl="moduleurl"> </customForm>
     </template>
   </div>
 </template>
@@ -17,11 +17,8 @@ export default {
   data () {
     return {
       id: null,
-      modulename: 'forms',
-      schema: {},
-      fields: ['id',
-        'name'],
-      rows: []
+      modulename: 'roles',
+      moduleurl: 'admin/roles'
     }
   },
   beforeRouteUpdate (to, from, next) {
@@ -29,20 +26,27 @@ export default {
     next()
   },
   mounted () {
-    this.getSchemaVuex('44e75d5d-13ac-44a8-a46c-dc4bcdef80bd')
+    this.getSchemaVuex('28ca109d-4939-4ca4-bed0-f5fd1a11bdf2')
     this.getModelVuex()
     // this.getSchema()
     // this.getData()
   },
   computed: {
     ...mapState({
-      schemaLoaded: state => state.forms.schemaLoaded
+      schemaLoaded: state => state.form.schemaLoaded,
+      modelLoaded (state) {
+        return state[this.modulename].modelLoaded
+      }
     })
   },
   methods: {
     ...mapActions({
-      getSchemaVuex: 'forms/getSchema',
-      getModelVuex: 'forms/getModel'
+      getSchemaVuex (dispatch, payload) {
+        return dispatch('form/getSchema', payload)
+      },
+      getModelVuex (dispatch, payload) {
+        return dispatch(this.modulename + '/getModel', payload)
+      }
     })
   }
 }

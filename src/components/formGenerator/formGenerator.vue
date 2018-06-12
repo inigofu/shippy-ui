@@ -2,7 +2,7 @@
 div.vue-form-generator(v-if='schema != null')
   fieldset(v-if="schema.fields", :is='tag')
     template(v-for='field in fields')
-      .form-group(v-if='fieldVisible(field)', :class='getFieldRowClasses(field)')
+      .form-group.col(v-if='fieldVisible(field)', :class='getFieldRowClasses(field)')
         label(v-if="fieldTypeHasLabel(field)", :for="getFieldID(field)", :class="field.labelClasses")
           | {{ field.label }}
           span.help(v-if='field.help')
@@ -20,7 +20,7 @@ div.vue-form-generator(v-if='schema != null')
     fieldset(:is='tag', :class='getFieldRowClasses(group)')
       legend(v-if='group.legend') {{ group.legend }}
       template(v-for='field in group.fields')
-        .form-group(v-if='fieldVisible(field)', :class='getFieldRowClasses(field)')
+        .form-group.col(v-if='fieldVisible(field)', :class='getFieldRowClasses(field)')
           label(v-if="fieldTypeHasLabel(field)", :for="getFieldID(field)", :class="field.labelClasses")
             | {{ field.label }}
             span.help(v-if='field.help')
@@ -100,7 +100,7 @@ export default {
         return {
           validateAfterLoad: false,
           validateAsync: false,
-          validateAfterChanged: false,
+          validateAfterChanged: true,
           validationErrorClass: 'error',
           validationSuccessClass: ''
         }
