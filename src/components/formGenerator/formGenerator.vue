@@ -2,7 +2,7 @@
 div.vue-form-generator(v-if='schema != null')
   fieldset(v-if="schema.fields", :is='tag')
     template(v-for='field in fields')
-      .form-group.col(v-if='fieldVisible(field)', :class='getFieldRowClasses(field)')
+      .form-group.col(v-if='fieldVisible(field)', :class='getFieldRowClasses(field)'  @contextmenu.prevent="$refs.menu1.open($event, { name: field.id})")
         label(v-if="fieldTypeHasLabel(field)", :for="getFieldID(field)", :class="field.labelClasses")
           | {{ field.label }}
           span.help(v-if='field.help')
@@ -33,12 +33,17 @@ div.vue-form-generator(v-if='schema != null')
           .hint(v-if='field.hint') {{ field.hint }}
           .errors.help-block(v-if='fieldErrors(field).length > 0')
             span(v-for='(error, index) in fieldErrors(field)', v-html='error', track-by='index')
+  vue-context(ref='menu1')
+            ul(slot-scope="child" v-if='child.data')
+                li(@click='alertName(child.data.name)') Alert Name
+                li(@click='deleteItem(child.data.name)') Delete "{{ child.data.name }}"</li>
 </template>
 
 <script>
 // import Vue from "vue";
 import { get as objGet, forEach, isFunction, isNil, isArray, isString } from 'lodash'
 import { slugifyFormID } from './utils/schema'
+import { VueContext } from 'vue-context'
 
 import fieldCheckbox from './fields/core/fieldCheckbox.vue'
 import fieldChecklist from './fields/core/fieldChecklist.vue'
@@ -87,7 +92,8 @@ export default {
     fieldSpectrum,
     fieldSwitch,
     fieldVueMultiSelect,
-    fieldStaticMap
+    fieldStaticMap,
+    VueContext
   },
   props: {
     schema: Object,
@@ -189,6 +195,12 @@ export default {
   },
 
   methods: {
+    alertName (name) {
+      alert(`You clicked on: "${name}"!`)
+    },
+    deleteItem (index) {
+      alert(`You deleted on: "${name}"!`)
+    },
     // Get style classes of field
     getFieldRowClasses (field) {
       const hasErrors = this.fieldErrors(field).length > 0
@@ -385,7 +397,9 @@ export default {
       this.errors.splice(0)
 
       forEach(this.$children, (child) => {
-        child.clearValidationErrors()
+        if (child.$options._componentTag !== 'vue-context') {
+          child.clearValidationErrors()
+        }
       })
     },
 
