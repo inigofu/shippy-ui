@@ -77,7 +77,6 @@ export default {
       this.grid = e
     },
     updateTabs (e, index) {
-      console.log(e)
       this.tabs[index] = e
     },
     handleClose (evt) {

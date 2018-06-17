@@ -13,13 +13,11 @@ const mutations = {
     state.rows = rows
   },
   setModelLoaded (state, loaded) {
-    console.log('loaded', loaded)
     state.modelLoaded = loaded
   }
 }
 const actions = {
   getModel ({ commit, state }) {
-    console.log('roles getmodel')
     services.roles.getModel()
       .then((response) => {
         commit('setRows', response)
@@ -61,7 +59,6 @@ const actions = {
     })
   },
   deleteModel ({ commit, state }, model) {
-    console.log('action delete model')
     return new Promise((resolve, reject) => {
       services.roles.deleteModel(model)
         .then((response) => {

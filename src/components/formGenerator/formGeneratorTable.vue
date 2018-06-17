@@ -146,7 +146,6 @@ export default {
         id: this.parentid
       }
       deletemodel[this.name] = [row]
-      console.log(deletemodel)
       this.deleteLineVuex(deletemodel)
     },
     myRowClickHandler (record, index) {

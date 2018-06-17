@@ -14,6 +14,7 @@ import Collapses from '@/views/base/Collapses'
 import Tooltips from '@/views/base/Tooltips'
 import users from '@/views/admin/users'
 import roles from '@/views/admin/roles'
+import fields from '@/views/admin/fields'
 
 // Views - Pages
 import Page404 from '@/views/pages/Page404'
@@ -82,6 +83,11 @@ export default new Router({
               path: 'users/:id?',
               name: 'Users',
               component: users
+            },
+            {
+              path: 'fields/:id?',
+              name: 'Fields',
+              component: fields
             }
           ]
         }

@@ -1,8 +1,18 @@
 <template>
 <div class="wrapper">
 <multipane class="custom-resizer" v-resize="onResize" layout="vertical" v-on:paneResize="paneResizeStop">
-  <div v-bind:class="[model ? 'd-none d-lg-block' : '' ,'pane']" v-bind:style="{minWidth: '20%' , width: panWidth}">
-    <data-table :rows="rows" :fields="fields" :select="selectRow" :stacked="stacked"></data-table>
+  <div v-bind:class="[model ? 'd-none d-lg-block' : '' ,'']" v-bind:style="{minWidth: '20%' , width: panWidth}">
+    <b-form-group horizontal label="Filter" class="mb-0">
+      <b-input-group>
+        <b-form-input v-model="filter" placeholder="Type to Search" />
+        <b-input-group-append>
+          <b-btn :disabled="!filter" @click="filter = ''">Clear</b-btn>
+        </b-input-group-append>
+      </b-input-group>
+    </b-form-group>
+    <div class='tablepane'>
+      <data-table :rows="rows" :fields="fields" :select="selectRow" :stacked="stacked" :filter="filter"></data-table>
+    </div>
   </div>
   <multipane-resizer class="d-none d-lg-block"></multipane-resizer>
   <div v-bind:class="[model ? '' : 'd-none d-lg-block' ,'pane']" :style="{ flexGrow: 1, maxWidth:'100%', width: '20%' }">
@@ -22,9 +32,10 @@
       <b-tabs >
         <b-tab v-for="(tab,index) in schematabs"  :key="tab.tabs.id" v-bind:title= "tab.tabs.name">
           <div class="control-buttons text-center">
-            <b-button @click="newLine(tab.tabs.name, index)" class="btn btn-default new"> <i class="fa fa-plus"></i>New line</b-button>
+            <b-button v-if="tab.tabs.multiline" @click="newLine(tab.tabs.name, index)" class="btn btn-default new"> <i class="fa fa-plus"></i>New line</b-button>
           </div>
-          <vue-form-generator-table :index="index" :model="tab.model" :name="tab.tabs.name" :parentid="id" :modulename="modulename" :options="formOptions" :is-new-model="isNewModel"></vue-form-generator-table>
+          <vue-form-generator-table v-if="tab.tabs.multiline" :index="index" :model="tab.model" :name="tab.tabs.name" :parentid="id" :modulename="modulename" :options="formOptions" :is-new-model="isNewModel"></vue-form-generator-table>
+          <vue-form-generator v-if="isNotMultiline(tab.tabs.multiline)" :schema="tab.tabs" :index="index" :model="tab.model[0]" :name="tab.tabs.name" :parentid="id" :modulename="modulename" :options="formOptions" :is-new-model="isNewModel"></vue-form-generator>
         </b-tab>
       </b-tabs>
     </div>
@@ -89,6 +100,7 @@ export default {
       model: null,
       gridModal: false,
       schemaCopia: this.schema,
+      filter: null,
       formOptions: {
         validateAfterLoad: true,
         validateAfterChanged: true,
@@ -117,10 +129,26 @@ export default {
     schematabs () {
       if (this.schema.tabs !== undefined && this.model !== null && this.model !== undefined) {
         return this.schema.tabs.map(function (tab, index, array) {
-          return {
-            tabs: tab,
-            model: this.model[tab.name],
-            modelstring: 'this.model.' + tab.name
+          if (this.model[tab.name] !== undefined) {
+            return {
+              tabs: tab,
+              model: this.model[tab.name],
+              modelstring: 'this.model.' + tab.name
+            }
+          } else if (tab.multiline === false || tab.multiline === undefined) {
+            let newRow = this.createDefaultObject(tab, { id: '1' })
+            Vue.set(this.model, tab.name, newRow)
+            return {
+              tabs: tab,
+              model: [newRow],
+              modelstring: 'this.model.' + tab.name
+            }
+          } else {
+            return {
+              tabs: tab,
+              model: [],
+              modelstring: 'this.model.' + tab.name
+            }
           }
         }, this)
       } else if (this.schema.tabs !== undefined) {
@@ -165,6 +193,13 @@ export default {
         return dispatch(this.modulename + '/deleteModel', payload)
       }
     }),
+    isNotMultiline (multiline) {
+      if (multiline === undefined || multiline === false) {
+        return true
+      } else {
+        return false
+      }
+    },
     handleClose (status) {
       this.gridModal = status
     },
@@ -202,7 +237,7 @@ export default {
     },
     newLine (tabid, tabindex) {
       let newRow = this.createDefaultObject(this.schema.tabs[tabindex], { id: '1' })
-      if (this.model[tabid] === undefined) {
+      if (this.model[tabid] === undefined || this.model[tabid] === null) {
         Vue.set(this.model, tabid, [newRow])
       } else {
         this.model[tabid].push(newRow)
@@ -240,7 +275,6 @@ export default {
       return ++id
     },
     validate () {
-      console.log('validate', this.$refs.form.validate())
       return this.$refs.form.validate()
     },
     getLocation (model) {
@@ -256,7 +290,6 @@ export default {
       }
     },
     paneResizeStop (pane, resizer, size) {
-      console.log(Number(size.replace('%', '')))
       if (Number(size.replace('%', '')) < 25) {
         this.stacked = true
       } else {
@@ -266,9 +299,7 @@ export default {
     // Create a new model by schema default values
     createDefaultObject (schema, obj = {}) {
       each(schema.fields, (field) => {
-        console.log('createDefaultObject fields', field)
         if (get(obj, field.model) === undefined && field.default !== undefined) {
-          console.log('createDefaultObject default')
           if (isFunction(field.default)) {
             set(obj, field.model, field.default(field, schema, obj))
           } else if (isObject(field.default) || isArray(field.default)) {
@@ -296,7 +327,6 @@ export default {
         })
         i++
       })
-      console.log('createDefaultObject', obj)
       return obj
     },
     // Get a new model which contains only properties of multi-edit fields
@@ -418,6 +448,15 @@ window.Vue = require('vue')
   .custom-resizer {
   width: 100%;
   height: calc(100vh - 165px);
+}
+.tablepane {
+  text-align: left;
+  overflow: hidden;
+  background: #eee;
+  border: 1px solid #ccc;
+  overflow-y:auto;
+  position: relative;
+  height: calc(100% - 35px);
 }
 .custom-resizer > .pane {
   text-align: left;

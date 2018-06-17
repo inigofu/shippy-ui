@@ -3,8 +3,8 @@ import { clone } from 'lodash'
 
 const state = {
   fields: ['id',
-    'name',
-    'email'],
+    'label',
+    'model'],
   rows: Array,
   modelLoaded: false
 }
@@ -19,7 +19,7 @@ const mutations = {
 }
 const actions = {
   getModel ({ commit, state }) {
-    services.users.getModel()
+    services.fields.getModel()
       .then((response) => {
         commit('setRows', response)
         commit('setModelLoaded', true)
@@ -30,14 +30,14 @@ const actions = {
   },
   saveModel ({ commit, state }, model) {
     return new Promise((resolve, reject) => {
-      services.users.saveModel(model)
+      services.fields.saveModel(model)
         .then((response) => {
           let tempRows = clone(state.rows)
           let temp = tempRows.filter(function (e) {
             return e.id === model.id
           })
           let index = tempRows.indexOf(temp[0])
-          tempRows.splice(index, 1, response.form)
+          tempRows.splice(index, 1, response.formschema)
           commit('setRows', tempRows)
         })
         .catch((error) => {
@@ -47,12 +47,12 @@ const actions = {
   },
   addModel ({ commit, state }, model) {
     return new Promise((resolve, reject) => {
-      services.users.addModel(model)
+      services.fields.addModel(model)
         .then((response) => {
           let tempRows = clone(state.rows)
-          tempRows.push(response.form)
+          tempRows.push(response.formschema)
           commit('setRows', tempRows)
-          resolve(response.form.id)
+          resolve(response.formschema.id)
         })
         .catch((error) => {
           reject(error)
@@ -61,7 +61,7 @@ const actions = {
   },
   deleteModel ({ commit, state }, model) {
     return new Promise((resolve, reject) => {
-      services.users.deleteModel(model)
+      services.fields.deleteModel(model)
         .then((response) => {
           let tempRows = clone(state.rows)
           let temp = tempRows.filter(function (e) {

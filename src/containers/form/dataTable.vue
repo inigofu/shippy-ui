@@ -1,5 +1,5 @@
 <template >
-  <b-table id="tabladatos" v-bind:stacked="stacked" hover :items="rows" :fields="fields" v-on:row-clicked="select" >
+  <b-table id="tabladatos" v-bind:stacked="stacked" hover :items="rows" :fields="fields" :filter="filter" v-on:row-clicked="select" >
   </b-table>
 </template>
 
@@ -10,7 +10,8 @@ export default {
     'rows',
     'select',
     'fields',
-    'stacked'
+    'stacked',
+    'filter'
   ]
 }
 </script>

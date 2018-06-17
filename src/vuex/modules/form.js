@@ -21,7 +21,6 @@ const mutations = {
     state.model = model
   },
   setSchemaLoaded (state, loaded) {
-    console.log('loaded', loaded)
     state.schemaLoaded = loaded
   }
 }
@@ -78,7 +77,6 @@ const actions = {
     })
   },
   deleteModel ({ commit, state }, model) {
-    console.log('action delete model')
     return new Promise((resolve, reject) => {
       services.form.deleteModel(model)
         .then((response) => {
@@ -101,7 +99,6 @@ const actions = {
     return new Promise((resolve, reject) => {
       services.form.saveModel(input)
         .then((data) => {
-          console.log('saved', data, input)
           commit('setSchema', data.form)
           resolve()
         }).catch((error) => {

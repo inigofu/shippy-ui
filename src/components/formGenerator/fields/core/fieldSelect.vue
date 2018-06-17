@@ -23,9 +23,11 @@ export default {
 
     items () {
       let values = this.schema.values
-      if (typeof (values) === 'function') {
+      if (values !== undefined && typeof (values) === 'function') {
         return this.groupValues(values.apply(this, [this.model, this.schema]))
-      } else { return this.groupValues(values) }
+      } else if (values !== undefined) {
+        return this.groupValues(values)
+      }
     }
   },
 
@@ -55,7 +57,7 @@ export default {
 
             arrayElement.ops.push({
               id: item.id,
-              name: item.name
+              value: item.value
             })
           } else {
             // There is not such a group.
@@ -72,7 +74,7 @@ export default {
             // Set Group element.
             arrayElement.ops.push({
               id: item.id,
-              name: item.name
+              value: item.value
             })
 
             // Add array.
@@ -119,8 +121,8 @@ export default {
         if (typeof this.schema['selectOptions'] !== 'undefined' && typeof this.schema['selectOptions']['name'] !== 'undefined') {
           return item[this.schema.selectOptions.name]
         } else {
-          if (typeof item['name'] !== 'undefined') {
-            return item.name
+          if (typeof item['value'] !== 'undefined') {
+            return item.value
           } else {
             var err = '`name` is not defined. If you want to use another key name, add a `name` property under `selectOptions` in the schema. https://icebob.gitbooks.io/vueformgenerator/content/fields/select.html#select-field-with-object-items'
             throw err

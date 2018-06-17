@@ -345,16 +345,12 @@ export default {
     this.datos.lg_offset = this.field.lg_offset
     this.datos.width = this.field.width
     this.datos.offset = this.field.offset
-    this.datos.type = this.field.type
-    this.datos.label = this.field.label
-    this.datos.model = this.field.model
-    this.datos.id = this.field.id
-    this.datos.featured = this.field.featured
-    this.datos.required = this.field.required
-    this.datos.help = this.field.help
-    this.datos.FormRefer = this.field.FormRefer
-    this.datos.inputType = this.field.inputType
-    this.datos.order = this.field.order
+    let key
+    for (key in this.field) {
+      if (key !== 'width' && key !== 'offset' && key !== 'xs' && key !== 'sm' && key !== 'md' && key !== 'lg' && key !== 'xs_offset' && key !== 'sm_offset' && key !== 'md_offset' && key !== 'lg_offset') {
+        this.datos[key] = this.field[key]
+      }
+    }
 
     this.reviewDimensions()
   },

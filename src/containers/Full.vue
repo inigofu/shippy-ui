@@ -93,7 +93,6 @@ export default {
   },
   beforeDestroy: function () {
     // `this` points to the vm instance
-    console.log('destroyed')
     window.localStorage.removeItem('token')
   }
 }

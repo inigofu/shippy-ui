@@ -10,7 +10,7 @@
           <div class="preview-container">
             <div  class="preview-rows" style="width: 50.4px;">
               <div  v-for="(group,index) in grid.groups" :key="index" class="preview-row">
-                <div v-for="(col,index) in group.fields" :key="index" class="preview-col">
+                <div v-for="(col,indexcol) in group.fields" :key="indexcol" class="preview-col">
                   <div class="preview-col-offset" v-bind:style = "{width : preview_xsoffset(col) + 'px'}"></div>
                   <div class="preview-col-width" v-bind:style = "{width : preview_xs(col) + 'px'}"></div>
                 </div>
@@ -26,7 +26,7 @@
           <div class="preview-container">
             <div  class="preview-rows" style="width: 79.2px;">
               <div  v-for="(group,index) in grid.groups" :key="index" class="preview-row">
-                <div v-for="(col,index) in group.fields" :key="index" class="preview-col">
+                <div v-for="(col,indexcol) in group.fields" :key="indexcol" class="preview-col">
                   <div class="preview-col-offset" v-bind:style = "{width : preview_smoffset(col) + 'px'}"></div>
                   <div class="preview-col-width" v-bind:style = "{width : preview_sm(col) + 'px'}"></div>
                 </div>
@@ -42,7 +42,7 @@
           <div class="preview-container">
             <div  class="preview-rows" style="width: 115.2px;">
               <div  v-for="(group,index) in grid.groups" :key="index" class="preview-row">
-                <div v-for="(col,index) in group.fields" :key="index" class="preview-col">
+                <div v-for="(col,indexcol) in group.fields" :key="indexcol" class="preview-col">
                   <div class="preview-col-offset" v-bind:style = "{width : preview_mdoffset(col) + 'px'}"></div>
                   <div class="preview-col-width" v-bind:style = "{width : preview_md(col) + 'px'}"></div>
                 </div>
@@ -58,7 +58,7 @@
           <div class="preview-container">
             <div  class="preview-rows" style="width: 144px;">
               <div  v-for="(group,index) in grid.groups" :key="index" class="preview-row">
-                <div v-for="(col,index) in group.fields" :key="index" class="preview-col">
+                <div v-for="(col,indexcol) in group.fields" :key="indexcol" class="preview-col">
                   <div class="preview-col-offset" v-bind:style = "{width : preview_lgoffset(col) + 'px'}"></div>
                   <div class="preview-col-width" v-bind:style = "{width : preview_lg(col)+ 'px'}"></div>
                 </div>
@@ -87,7 +87,7 @@
             <div v-for="(group,index) in grid.groups" :key="index" class="sl-row easing" id = "row-">
               <draggable class="cols" element="div" v-model="group.fields" :options="dragOptions" :move="onMove" @start="drag=false" @end="onEndDrag">
 
-                  <resize-observer v-for="(col,indexcol) in group.fields" :key="col.order" :preview="preview" :grid="[74,74]" :w="col.width" :x="col.offset" v-model="group.fields[indexcol]" :field="col" class="columna dragging" id="col-3" @resizing="onChange">
+                  <resize-observer v-for="(col,indexcol) in group.fields" :key="indexcol" :preview="preview" :grid="[77,77]" :w="col.width" :x="col.offset" v-model="group.fields[indexcol]" :field="col" class="columna dragging" id="col-3" @resizing="onChange">
 
                   </resize-observer>
 
@@ -162,8 +162,12 @@ export default {
         }
         this.grid.groups = [{legend: 'New row',
           fields: this.schema.fields}]
-        this.grid.name = this.schema.name
-        this.grid.id = this.schema.id
+        let key
+        for (key in this.schema) {
+          if (key !== 'fields') {
+            this.grid[key] = this.schema[key]
+          }
+        }
       } else {
         this.grid = this.schema
       }
@@ -177,9 +181,7 @@ export default {
       for (let i = 0; i < this.grid.groups.length; i++) {
         if (this.grid.groups[i].fields !== undefined) {
           previewcol.groups.push({fields: this.grid.groups[i].fields.map(function (obj, index, array) {
-            return {
-              width: obj.width,
-              offset: obj.offset,
+            let tempobj = {
               xs: obj.xs,
               sm: obj.sm,
               md: obj.md,
@@ -187,23 +189,24 @@ export default {
               xs_offset: obj.xs_offset,
               sm_offset: obj.sm_offset,
               md_offset: obj.md_offset,
-              lg_offset: obj.lg_offset,
-              order: index + 1,
-              type: obj.type,
-              label: obj.label,
-              model: obj.model,
-              id: obj.id,
-              featured: obj.featured,
-              required: obj.required,
-              help: obj.help,
-              FormRefer: obj.FormRefer,
-              inputType: obj.inputType
+              lg_offset: obj.lg_offset
             }
+            let key
+            for (key in obj) {
+              if (key !== 'width' && key !== 'offset' && key !== 'xs' && key !== 'sm' && key !== 'md' && key !== 'lg' && key !== 'xs_offset' && key !== 'sm_offset' && key !== 'md_offset' && key !== 'lg_offset') {
+                tempobj[key] = obj[key]
+              }
+            }
+            return tempobj
           }, this)})
         }
       }
-      previewcol.name = this.grid.name
-      previewcol.id = this.grid.id
+      let key
+      for (key in this.grid) {
+        if (key !== 'groups') {
+          previewcol[key] = this.grid[key]
+        }
+      }
       this.grid = previewcol
     },
     onMove ({relatedContext, draggedContext}) {
@@ -245,13 +248,13 @@ export default {
     },
     preview_md (col) {
       if (col.md !== null && col.md !== undefined) {
-        return 8 * col.md
+        return 8 * col.md - 3
       } else if (col.sm !== null && col.sm !== undefined) {
-        return 8 * col.sm
+        return 8 * col.sm - 3
       } else if (col.xs !== null && col.xs !== undefined) {
-        return 8 * col.xs
+        return 8 * col.xs - 3
       } else {
-        return 110
+        return 104
       }
     },
     preview_mdoffset (col) {
@@ -267,26 +270,26 @@ export default {
     },
     preview_lg (col) {
       if (col.lg !== null && col.lg !== undefined) {
-        return 130 / 12 * col.lg
+        return 10 * col.lg - 3
       } else if (col.md !== null && col.md !== undefined) {
-        return 130 / 12 * col.md
+        return 10 * col.md - 3
       } else if (col.sm !== null && col.sm !== undefined) {
-        return 130 / 12 * col.sm
+        return 10 * col.sm - 3
       } else if (col.xs !== null && col.xs !== undefined) {
-        return 130 / 12 * col.xs
+        return 10 * col.xs - 3
       } else {
         return 130
       }
     },
     preview_lgoffset (col) {
       if (col.lg_offset !== null && col.lg_offset !== undefined) {
-        return 130 / 12 * col.lg_offset
+        return 10 * col.lg_offset
       } else if (col.md_offset !== null && col.md_offset !== undefined) {
-        return 130 / 12 * col.md_offset
+        return 10 * col.md_offset
       } else if (col.sm_offset !== null && col.sm_offset !== undefined) {
-        return 130 / 12 * col.sm_offset
+        return 10 * col.sm_offset
       } else if (col.xs_offset !== null && col.xs_offset !== undefined) {
-        return 130 / 12 * col.xs_offset
+        return 10 * col.xs_offset
       } else {
         return 0
       }
@@ -298,67 +301,73 @@ export default {
       previewcol.groups = []
       for (i = 0; i < this.grid.groups.length; i++) {
         previewcol.groups.push({fields: this.grid.groups[i].fields.map(function (obj, index, array) {
-          let width = 880
+          let width = 924
           let offset = 0
           switch (this.preview) {
             case 'xs':
               if (obj.xs !== null && obj.xs !== undefined) {
-                width = 74 * obj.xs
+                width = 77 * obj.xs
               }
               if (obj.xs_offset !== null && obj.xs_offset !== undefined) {
-                offset = 74 * obj.xs_offset
+                offset = 77 * obj.xs_offset
               }
               break
             case 'sm':
               if (obj.sm !== null && obj.sm !== undefined) {
-                width = 74 * obj.sm
+                width = 77 * obj.sm
               } else if (obj.xs !== null && obj.xs !== undefined) {
-                width = 74 * obj.xs
+                width = 77 * obj.xs
               }
               if (obj.sm_offset !== null && obj.sm_offset !== undefined) {
-                offset = 74 * obj.sm_offset
+                offset = 77 * obj.sm_offset
               } else if (obj.xs_offset !== null && obj.xs_offset !== undefined) {
-                offset = 74 * obj.xs_offset
+                offset = 77 * obj.xs_offset
               }
               break
             case 'md':
               if (obj.md !== null && obj.md !== undefined) {
-                width = 74 * obj.md
+                width = 77 * obj.md
               } else if (obj.sm !== null && obj.sm !== undefined) {
-                width = 74 * obj.sm
+                width = 77 * obj.sm
               } else if (obj.xs !== null && obj.xs !== undefined) {
-                width = 74 * obj.xs
+                width = 77 * obj.xs
               }
               if (obj.md_offset !== null && obj.md_offset !== undefined) {
-                offset = 74 * obj.md_offset
+                offset = 77 * obj.md_offset
               } else if (obj.sm_offset !== null && obj.sm_offset !== undefined) {
-                offset = 74 * obj.sm_offset
+                offset = 77 * obj.sm_offset
               } else if (obj.xs_offset !== null && obj.xs_offset !== undefined) {
-                offset = 74 * obj.xs_offset
+                offset = 77 * obj.xs_offset
               }
               break
             case 'lg':
               if (obj.lg !== null && obj.lg !== undefined) {
-                width = 74 * obj.lg
+                width = 77 * obj.lg
               } else if (obj.md !== null && obj.md !== undefined) {
-                width = 74 * obj.md
+                width = 77 * obj.md
               } else if (obj.sm !== null && obj.sm !== undefined) {
-                width = 74 * obj.sm
+                width = 77 * obj.sm
               } else if (obj.xs !== null && obj.xs !== undefined) {
-                width = 74 * obj.xs
+                width = 77 * obj.xs
               }
               if (obj.lg_offset !== null && obj.lg_offset !== undefined) {
-                offset = 74 * obj.lg_offset
+                offset = 77 * obj.lg_offset
               } else if (obj.md_offset !== null && obj.md_offset !== undefined) {
-                offset = 74 * obj.md_offset
+                offset = 77 * obj.md_offset
               } else if (obj.sm_offset !== null && obj.sm_offset !== undefined) {
-                offset = 74 * obj.sm_offset
+                offset = 77 * obj.sm_offset
               } else if (obj.xs_offset !== null && obj.xs_offset !== undefined) {
-                offset = 74 * obj.xs_offset
+                offset = 77 * obj.xs_offset
               }
               break
           }
-          return {
+          let offsetcount = 0
+          let widthcount = 0
+          if (offset > 0) { offsetcount = 1 }
+          if (width > 0) { widthcount = 1 }
+          width = width - (15 / (offsetcount + widthcount))
+          offset = offset - (15 / (offsetcount + widthcount))
+          let tempobj = {
             width: width,
             offset: offset,
             xs: obj.xs,
@@ -368,22 +377,23 @@ export default {
             xs_offset: obj.xs_offset,
             sm_offset: obj.sm_offset,
             md_offset: obj.md_offset,
-            lg_offset: obj.lg_offset,
-            order: obj.order,
-            type: obj.type,
-            label: obj.label,
-            model: obj.model,
-            id: obj.id,
-            featured: obj.featured,
-            required: obj.required,
-            help: obj.help,
-            FormRefer: obj.FormRefer,
-            inputType: obj.inputType
+            lg_offset: obj.lg_offset
           }
+          let key
+          for (key in obj) {
+            if (key !== 'width' && key !== 'offset' && key !== 'xs' && key !== 'sm' && key !== 'md' && key !== 'lg' && key !== 'xs_offset' && key !== 'sm_offset' && key !== 'md_offset' && key !== 'lg_offset') {
+              tempobj[key] = obj[key]
+            }
+          }
+          return tempobj
         }, this)})
       }
-      previewcol.name = this.grid.name
-      previewcol.id = this.grid.id
+      let key
+      for (key in this.grid) {
+        if (key !== 'groups') {
+          previewcol[key] = this.grid[key]
+        }
+      }
       this.grid = previewcol
     }
   }
@@ -725,6 +735,7 @@ input {
   left: 176px;
   overflow-y: scroll;
   background-color: #ffffff;
+  overflow-y:auto;
 }
 .workspace.medias-collapsed {
   left: 50px;
@@ -739,8 +750,9 @@ input {
   top: 0;
 }
 .workspace .columns .columna {
-  width: 60px;
+  width: 62px;
   height: 100%;
+  margin-right: 15px;
   background-color: #d6d3d3;
 }
 .row .columna {
@@ -843,10 +855,11 @@ input {
   color: rgba(255, 255, 255, 0.4);
 }
 .sl-container {
-  width: 935px;
+  width: 975px;
   overflow: hidden;
   position: relative;
   height: 100%;
+  overflow-y:auto;
   margin: 0 auto;
 }
 .sl-container.xs .sl-row {
