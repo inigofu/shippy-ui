@@ -14,15 +14,15 @@ Vue.use(BootstrapVue)
 
 // Check local storage to handle refreshes
 if (window.localStorage) {
-  if (store.state.token.token !== window.localStorage.getItem('token')) {
-    store.commit('token/SET_TOKEN', window.localStorage.getItem('token'))
+  if (store.state.user.token !== window.localStorage.getItem('token')) {
+    store.commit('user/settoken', window.localStorage.getItem('token'))
   }
 }
 // Some middleware to help us ensure the user is authenticated.
 router.beforeEach((to, from, next) => {
-  if (to.matched.some(record => record.meta.requiresAuth) && (store.state.token.token === null)) {
+  if (to.matched.some(record => record.meta.requiresAuth) && (store.state.user.token === null)) {
     next('/pages/login')
-  } else if ((store.state.token.token !== null) && to.path === '/pages/login') {
+  } else if ((store.state.user.token !== null) && to.path === '/pages/login') {
     next('/')
   } else {
     next()

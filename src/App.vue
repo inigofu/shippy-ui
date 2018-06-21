@@ -3,8 +3,33 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex'
 export default {
-  name: 'app'
+  name: 'app',
+  mounted: function () {
+    // `this` points to the vm instance
+    console.log('app mounted')
+    if (window.localStorage) {
+      var token = window.localStorage.getItem('token')
+      console.log('app mounted', token)
+      if (token !== null) {
+        this.validateToken(token)
+          .then((data) => {
+            this.$router.push('/')
+          }).catch((error) => {
+            this.$router.push('/')
+            throw error
+          })
+      }
+    }
+  },
+  methods: {
+    ...mapActions({
+      validateToken (dispatch, payload) {
+        return dispatch('user/validateToken', payload)
+      }
+    })
+  }
 }
 </script>
 

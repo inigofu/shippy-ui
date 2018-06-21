@@ -1,5 +1,5 @@
 import JSONfn from 'json-fn'
-import Api from './Api'
+import Api from './api'
 import { validators } from './validators.js'
 
 function dataChek (key, value) {

@@ -19,15 +19,20 @@
       </b-nav-item-dropdown>
 </template>
 <script>
+import { mapActions } from 'vuex'
 export default {
   name: 'header-dropdown',
   data: () => {
     return { itemsCount: 42 }
   },
   methods: {
+    ...mapActions({
+      logoutVuex (dispatch, payload) {
+        return dispatch('user/logout', payload)
+      }
+    }),
     logout: function () {
-      var store = this.$store
-      store.commit('REMOVE_TOKEN')
+      this.logoutVuex()
       // Delete from local storage as well
       if (window.localStorage) {
         window.localStorage.removeItem('token')

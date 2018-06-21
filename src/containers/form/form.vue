@@ -35,7 +35,7 @@
             <b-button v-if="tab.tabs.multiline" @click="newLine(tab.tabs.name, index)" class="btn btn-default new"> <i class="fa fa-plus"></i>New line</b-button>
           </div>
           <vue-form-generator-table v-if="tab.tabs.multiline" :index="index" :model="tab.model" :name="tab.tabs.name" :parentid="id" :modulename="modulename" :options="formOptions" :is-new-model="isNewModel"></vue-form-generator-table>
-          <vue-form-generator v-if="isNotMultiline(tab.tabs.multiline)" :schema="tab.tabs" :index="index" :model="tab.model[0]" :name="tab.tabs.name" :parentid="id" :modulename="modulename" :options="formOptions" :is-new-model="isNewModel"></vue-form-generator>
+          <vue-form-generator v-if="isNotMultiline(tab.tabs.multiline)" :schema="tab.tabs" :index="index" :model="tab.model" :name="tab.tabs.name" :parentid="id" :modulename="modulename" :options="formOptions" :is-new-model="isNewModel"></vue-form-generator>
         </b-tab>
       </b-tabs>
     </div>
@@ -129,6 +129,7 @@ export default {
     schematabs () {
       if (this.schema.tabs !== undefined && this.model !== null && this.model !== undefined) {
         return this.schema.tabs.map(function (tab, index, array) {
+          console.log('schematabs', tab.name, this.model[tab.name])
           if (this.model[tab.name] !== undefined) {
             return {
               tabs: tab,
@@ -140,13 +141,13 @@ export default {
             Vue.set(this.model, tab.name, newRow)
             return {
               tabs: tab,
-              model: [newRow],
+              model: newRow,
               modelstring: 'this.model.' + tab.name
             }
           } else {
             return {
               tabs: tab,
-              model: [],
+              model: null,
               modelstring: 'this.model.' + tab.name
             }
           }
@@ -155,7 +156,7 @@ export default {
         return this.schema.tabs.map(function (tab, index, array) {
           return {
             tabs: tab,
-            model: [],
+            model: null,
             modelstring: {}
           }
         }, this)

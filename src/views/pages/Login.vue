@@ -45,6 +45,7 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex'
 export default {
   name: 'Login',
   data: function () {
@@ -57,32 +58,18 @@ export default {
     }
   },
   methods: {
+    ...mapActions({
+      loginVuex (dispatch, payload) {
+        return dispatch('user/login', payload)
+      }
+    }),
     login: function () {
-      var store = this.$store
-      this.$http.post('/rpc', {
-        request: {
-          email: this.credentials.username,
-          password: this.credentials.password
-        },
-        service: 'shippy.auth',
-        method: 'Auth.Auth'
-      })
-        .then(({ data }) => {
-          var token = data.token.token
-          store.commit('token/SET_TOKEN', token)
-          // Save to local storage as well
-          if (window.localStorage) {
-            window.localStorage.setItem('token', token)
-          }
-          store.commit('user/SET_USER', data.user)
-          this.$http.defaults.headers.common['Authorization'] = token ? `Bearer ${token}` : ''
+      this.loginVuex(this.credentials)
+        .then((data) => {
+          console.log('logged', data)
           this.$router.push('/')
         }).catch((error) => {
-          const { status, data } = error.response
-          if (status === 422) {
-            this.error = data.body.message
-          }
-          throw error
+          console.log(error.response)
         })
     }
   }

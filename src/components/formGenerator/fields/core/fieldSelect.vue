@@ -100,8 +100,10 @@ export default {
 
     getItemValue (item) {
       if (isObject(item)) {
-        if (typeof this.schema['selectOptions'] !== 'undefined' && typeof this.schema['selectOptions']['value'] !== 'undefined') {
-          return item[this.schema.selectOptions.value]
+        console.log('getItemValue', this.schema, this.schema['selectoptions'])
+        if (typeof this.schema['selectoptions'] !== 'undefined' && typeof this.schema['selectoptions']['value'] !== 'undefined') {
+          console.log('getItemValue 2')
+          return item[this.schema.selectoptions.value]
         } else {
           // Use 'id' instead of 'value' cause of backward compatibility
           if (typeof item['id'] !== 'undefined') {
