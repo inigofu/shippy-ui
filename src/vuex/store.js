@@ -7,7 +7,7 @@ import { abilityPlugin, ability as appAbility } from './modules/abilitys'
 Vue.use(Vuex)
 export const ability = appAbility
 
-export default new Vuex.Store({
+export const store = new Vuex.Store({
   plugins: [
     abilityPlugin
   ],

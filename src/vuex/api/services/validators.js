@@ -34,8 +34,10 @@ let resources = {
 }
 
 function checkEmpty (value, required, messages = resources) {
-  if (isNil(value) || value === ' ') {
+  console.log('checkEmpty', value, 'isnil', isNil(value), 'required', required, msg(messages.fieldIsRequired))
+  if (isNil(value) || value === '' || value === ' ') {
     if (required) {
+      console.log('checkEmpty in')
       return [msg(messages.fieldIsRequired)]
     } else {
       return []
@@ -58,6 +60,7 @@ export const validators = {
 
   resources,
   required (value, field, model, messages = resources) {
+    console.log('checkEmpty result', checkEmpty(value, field.required, messages))
     return checkEmpty(value, field.required, messages)
   },
 

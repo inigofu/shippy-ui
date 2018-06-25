@@ -71,12 +71,14 @@ export default {
             validators.push(convertValidator(validator).bind(this))
           })
         }
-
+        console.log('validators', validators)
         forEach(validators, (validator) => {
           if (validateAsync) {
             results.push(validator(this.value, this.schema, this.model))
+            console.log('validators results async', results)
           } else {
             let result = validator(this.value, this.schema, this.model)
+            console.log('validators result', result, this.value, this.schema, this.model)
             if (result && isFunction(result.then)) {
               result.then((err) => {
                 if (err) {

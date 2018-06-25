@@ -13,7 +13,8 @@ const state = {
     createdAt: new Date()
   },
   token: null,
-  nav: []
+  nav: [],
+  rules: null
 }
 
 const mutations = {
@@ -29,6 +30,9 @@ const mutations = {
   },
   setnav (state, nav) {
     state.nav = nav
+  },
+  settules (state, rules) {
+    state.rules = rules
   }
 }
 
@@ -41,6 +45,7 @@ const actions = {
           commit('settoken', token)
           commit('setuser', data.user)
           commit('setnav', data.menues)
+          commit('settules', data.rules)
           // Save to local storage as well
           if (window.localStorage) {
             window.localStorage.setItem('token', token)
@@ -61,6 +66,7 @@ const actions = {
             commit('settoken', token)
             commit('setuser', data.user)
             commit('setnav', data.menues)
+            commit('settules', data.rules)
           } else {
             window.localStorage.removeItem('token')
           }

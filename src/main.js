@@ -4,13 +4,12 @@ import Vue from 'vue'
 import BootstrapVue from 'bootstrap-vue'
 import App from './App'
 import router from './router'
-import store from './vuex/store.js'
-import axios from 'axios'
+import { store, ability } from './vuex/store.js'
+import { abilitiesPlugin } from '@casl/vue'
 
-window.axios = axios
-axios.defaults.baseURL = 'http://localhost:8080'
-Vue.prototype.$http = window.axios
 Vue.use(BootstrapVue)
+Vue.use(abilitiesPlugin, ability)
+window.ability = ability
 
 // Check local storage to handle refreshes
 if (window.localStorage) {

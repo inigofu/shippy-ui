@@ -3,7 +3,7 @@ div.vue-form-generator(v-if='schema')
   b-table(v-if='schema.fields', :items='model' :fields='fields' @row-clicked="myRowClickHandler")
     template(slot='row-details', slot-scope='row')
       b-card
-        vue-form-generator(:schema='schema' :model='row.item' :options='options' :multiple='multiple' :isNewModel='isNewModel')
+        vue-form-generator(:schema='schema' :model='row.item' :options='options' :multiple='multiple' @validated="onValidated" :isNewModel='isNewModel')
         b-button(@click="deleteLine(row.item)" class="btn btn-danger delete")
          i.fa.fa-trash
          | Delete line
@@ -141,6 +141,9 @@ export default {
         return dispatch(this.modulename + '/' + this.name + '/deleteLine', payload)
       }
     }),
+    onValidated (res, errors) {
+      this.$emit('validated', res, errors)
+    },
     deleteLine (row) {
       let deletemodel = {
         id: this.parentid

@@ -21,12 +21,12 @@
         <b-button @click="newModel" class="btn btn-default new"> <i class="fa fa-plus"></i>New</b-button>
         <b-button @click="saveModel" class="btn btn-primary save"> <i class="fa fa-floppy-o"></i>Save<i v-if="showWarning()" class="fa fa-warning"></i></b-button>
         <b-button @click="deleteModel" class="btn btn-danger delete"> <i class="fa fa-trash"></i>Delete</b-button>
-        <b-button type="button" variant="info" @click="gridModalShow">Grid designer</b-button>
+        <b-button v-if="$can('update', 'griddesigner')" type="button" variant="info" @click="gridModalShow">Grid designer</b-button>
       </div>
       <div class="errors text-center">
-        <div v-for="(item, index) in validationErrors" :key=index track-by="index" class="alert alert-danger">{{ item.field.label}}: <strong>{{ item.error }}</strong></div>
+        <div v-for="(item, index) in errors" :key=index track-by="index" class="alert alert-danger">{{ item.field.label}}: <strong>{{ item.error }}</strong></div>
       </div>
-      <vue-form-generator :schema="schema" :model="model" :options="formOptions" ref="form" :is-new-model="isNewModel" @validated="onValidated"></vue-form-generator>
+      <vue-form-generator :schema="schema" :model="model" :options="formOptions" ref="form" :is-new-model="isNewModel" @validated="onValidated('form',...arguments)"></vue-form-generator>
     </div>
     <div>
       <b-tabs >
@@ -34,8 +34,8 @@
           <div class="control-buttons text-center">
             <b-button v-if="tab.tabs.multiline" @click="newLine(tab.tabs.name, index)" class="btn btn-default new"> <i class="fa fa-plus"></i>New line</b-button>
           </div>
-          <vue-form-generator-table v-if="tab.tabs.multiline" :index="index" :model="tab.model" :name="tab.tabs.name" :parentid="id" :modulename="modulename" :options="formOptions" :is-new-model="isNewModel"></vue-form-generator-table>
-          <vue-form-generator v-if="isNotMultiline(tab.tabs.multiline)" :schema="tab.tabs" :index="index" :model="tab.model" :name="tab.tabs.name" :parentid="id" :modulename="modulename" :options="formOptions" :is-new-model="isNewModel"></vue-form-generator>
+          <vue-form-generator-table v-if="tab.tabs.multiline" :index="index" :model="tab.model" :name="tab.tabs.name" :parentid="id" :modulename="modulename" :options="formOptions" :is-new-model="isNewModel" @validated="onValidated(tab.tabs.name,...arguments)"></vue-form-generator-table>
+          <vue-form-generator v-if="isNotMultiline(tab.tabs.multiline)" :schema="tab.tabs" :index="index" :model="tab.model" :name="tab.tabs.name" :parentid="id" :modulename="modulename" :options="formOptions" :is-new-model="isNewModel" @validated="onValidated(tab.tabs.name,...arguments)"></vue-form-generator>
         </b-tab>
       </b-tabs>
     </div>
@@ -105,7 +105,8 @@ export default {
         validateAfterLoad: true,
         validateAfterChanged: true,
         validateBeforeSave: true
-      }
+      },
+      errors: []
     }
   },
   computed: {
@@ -118,11 +119,6 @@ export default {
         return state[this.modulename].fields
       }
     }),
-    validationErrors () {
-      if (this.$refs.form && this.$refs.form.errors) { return this.$refs.form.errors }
-
-      return []
-    },
     id () {
       return this.propID
     },
@@ -219,9 +215,7 @@ export default {
       }
     },
     showWarning () {
-      if (this.$refs.form && this.$refs.form.errors) {
-        return this.$refs.form.errors.length > 0
-      }
+      return this.errors.length > 0
     },
 
     selectRow (record, id) {
@@ -230,7 +224,19 @@ export default {
       this.changed = false
       this.$router.push('/' + this.moduleurl + '/' + record.id)
     },
-    onValidated (res, errors) {
+    onValidated (name, res, errors) {
+      console.log('onValidated', res, errors, name)
+      this.errors = this.errors.filter(function (el) { return el.name !== name })
+      if (!res) {
+        let temp = errors.map(function (error, index, array) {
+          return {error: error.error,
+            field: error.field,
+            name: name}
+        })
+        each(temp, (err) => {
+          this.errors.push(err)
+        })
+      }
       console.log('VFG validated:', res, errors)
     },
     newModel () {

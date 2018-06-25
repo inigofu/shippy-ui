@@ -334,6 +334,7 @@ export default {
     // Child field executed validation
     onFieldValidated (res, errors, field) {
       // Remove old errors for this field
+      console.log('onFieldValidated', field, res, errors)
       this.errors = this.errors.filter(e => e.field !== field.schema)
 
       if (!res && errors && errors.length > 0) {
